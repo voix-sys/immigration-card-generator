@@ -32,6 +32,52 @@ st.set_page_config(
     layout="wide",
 )
 
+st.markdown("""
+<style>
+  /* 전체 배경 흰색 */
+  .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+      background-color: #ffffff !important;
+  }
+  /* 사이드바 배경 */
+  [data-testid="stSidebar"] {
+      background-color: #f5f5f5 !important;
+  }
+  /* 모든 텍스트 검정 */
+  html, body, [class*="css"], .stMarkdown, .stText, label,
+  p, h1, h2, h3, h4, h5, h6, span, div {
+      color: #111111 !important;
+  }
+  /* 입력 필드 */
+  input, textarea, select {
+      background-color: #ffffff !important;
+      color: #111111 !important;
+      border: 1px solid #cccccc !important;
+  }
+  /* 버튼 */
+  .stButton > button {
+      background-color: #1a56db !important;
+      color: #ffffff !important;
+      border: none !important;
+  }
+  .stButton > button:hover {
+      background-color: #1245b5 !important;
+  }
+  /* 데이터 테이블 */
+  [data-testid="stDataFrame"] {
+      background-color: #ffffff !important;
+  }
+  /* info / success / warning 박스 */
+  [data-testid="stAlert"] {
+      color: #111111 !important;
+  }
+  /* selectbox, radio */
+  [data-testid="stSelectbox"] label,
+  [data-testid="stRadio"] label {
+      color: #111111 !important;
+  }
+</style>
+""", unsafe_allow_html=True)
+
 # ── 호텔 프리셋 ────────────────────────────────────────────────
 HOTEL_PRESETS = [
     {"name": "직접입력", "hotel": "", "tel": ""},
