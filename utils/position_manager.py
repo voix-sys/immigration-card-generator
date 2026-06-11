@@ -4,117 +4,139 @@ from pathlib import Path
 
 CONFIG_DIR = Path(__file__).parent.parent / "configs"
 
-
 # ──────────────────────────────────────────────────────────────
-# 기본 좌표 정의
-# 좌표계: x, y = A4 포인트 기준 (좌상단 원점, 우/아래 방향 증가)
-# A4 = 595 × 842 pt  (1pt ≈ 0.353mm)
+# 좌표계: A4 포인트 기준, 좌상단 원점 (x→, y↓)
+# A4 = 595 × 842 pt
 #
-# 이미지를 직접 보고 추정한 초기값 — UI 위치 보정으로 미세조정 가능
+# 이미지 분석 기준:
+#   카드 상단 y ≈ 15pt, 하단 y ≈ 320pt
+#   카드 좌  x ≈ 18pt, 우  x ≈ 577pt
+#   좌측 레이블 열 너비 ≈ 98pt (x=18~116)
+#   입력 영역 시작 x ≈ 118pt
+#
+# 행별 y 범위 (상단 기준):
+#   Row0 헤더        : y=15~40
+#   Row1 氏名/Name   : y=40~67  → 입력 y≈53
+#   Row2 生年月日等  : y=67~93  → 입력 y≈79
+#   Row3 渡航目的上  : y=93~123 → 입력 y≈107
+#   Row4 渡航目的下  : y=123~140→ 입력 y≈128
+#   Row5 連絡先/TEL  : y=140~163→ 입력 y≈151
 # ──────────────────────────────────────────────────────────────
 
 DEFAULT_IMMIGRATION = {
-    # ── 氏名 / Name ──────────────────────────────────────────
+    # ── Row1: 氏名 / Name ──────────────────────────────────
     "family_name": {
         "label": "성(Family Name)",
         "type": "text",
-        "x": 168, "y": 62,
-        "width": 175, "height": 16,
-        "font_size": 9,
+        "x": 168, "y": 53,
+        "width": 182, "height": 15,
+        "font_size": 10,
         "align": "left"
     },
     "given_name": {
         "label": "이름(Given Names)",
         "type": "text",
-        "x": 365, "y": 62,
-        "width": 185, "height": 16,
-        "font_size": 9,
+        "x": 362, "y": 53,
+        "width": 205, "height": 15,
+        "font_size": 10,
         "align": "left"
     },
-    # ── 生年月日 / Date of Birth (split: D M Y 순서) ──────────
-    # 칸 순서: Day(2) | Month(2) | Year(4)  → 왼쪽부터 입력
+
+    # ── Row2: 生年月日 (DDMMYYYY, 한 글자씩) ───────────────
+    # 카드 순서: Day(2자) · Month(2자) · Year(4자)
+    # 각 칸 폭 ≈ 13pt, Day시작 x≈118, Month x≈150, Year x≈184
     "dob_split": {
-        "label": "생년월일(DDMMYYYY split)",
+        "label": "생년월일(DDMMYYYY 칸분리)",
         "type": "split_text",
-        "x": 108, "y": 83,
+        "x": 118, "y": 79,
         "cell_gap": 13.5,
         "font_size": 9
     },
-    # ── 現住所 / Home Address ────────────────────────────────
+
+    # ── Row2: 国名 Country name ────────────────────────────
+    # 现住所(빈칸) 다음, 国名 헤더 뒤 입력 영역
     "country": {
         "label": "국명(Country name)",
         "type": "text",
-        "x": 256, "y": 83,
-        "width": 110, "height": 16,
-        "font_size": 8,
+        "x": 268, "y": 79,
+        "width": 102, "height": 15,
+        "font_size": 9,
         "align": "left"
     },
+
+    # ── Row2: 都市名 City name ─────────────────────────────
     "city": {
         "label": "도시명(City name)",
         "type": "text",
-        "x": 392, "y": 83,
-        "width": 150, "height": 16,
-        "font_size": 8,
+        "x": 393, "y": 79,
+        "width": 174, "height": 15,
+        "font_size": 9,
         "align": "left"
     },
-    # ── 渡航目的 / Purpose of visit ─────────────────────────
+
+    # ── Row3: 渡航目的 체크박스 ────────────────────────────
+    # □ 칸 안에 X 표시 — □ 위치에서 약간 오른쪽/아래
     "purpose_tourism": {
         "label": "목적: 관광(Tourism) □",
         "type": "checkbox",
-        "x": 110, "y": 108,
-        "font_size": 10
+        "x": 112, "y": 105,
+        "font_size": 9
     },
     "purpose_business": {
         "label": "목적: 상용(Business) □",
         "type": "checkbox",
-        "x": 200, "y": 108,
-        "font_size": 10
+        "x": 203, "y": 105,
+        "font_size": 9
     },
     "purpose_relatives": {
-        "label": "목적: 친족방문(Visiting relatives) □",
+        "label": "목적: 친족(Visiting relatives) □",
         "type": "checkbox",
-        "x": 292, "y": 108,
-        "font_size": 10
+        "x": 296, "y": 105,
+        "font_size": 9
     },
     "purpose_others": {
         "label": "목적: 기타(Others) □",
         "type": "checkbox",
-        "x": 110, "y": 126,
-        "font_size": 10
+        "x": 112, "y": 127,
+        "font_size": 9
     },
-    # ── 航空機便名 / Flight No. ──────────────────────────────
+
+    # ── Row3: 航空機便名 / Flight No. ──────────────────────
     "flight_no": {
         "label": "항공편명(Flight No.)",
         "type": "text",
-        "x": 402, "y": 103,
-        "width": 148, "height": 15,
+        "x": 408, "y": 104,
+        "width": 155, "height": 14,
         "font_size": 9,
         "align": "left"
     },
-    # ── 日本滞在予定期間 / Stay duration ──────────────────────
+
+    # ── Row4: 日本滞在予定期間 / Stay duration ─────────────
     "stay_duration": {
         "label": "체류예정기간(Stay duration)",
         "type": "text",
-        "x": 402, "y": 120,
-        "width": 148, "height": 15,
+        "x": 408, "y": 124,
+        "width": 155, "height": 14,
         "font_size": 9,
         "align": "left"
     },
-    # ── 日本の連絡先 / Address in Japan ──────────────────────
+
+    # ── Row5: 日本の連絡先 / Address in Japan ──────────────
     "hotel_name": {
         "label": "호텔명(Address in Japan)",
         "type": "text",
-        "x": 110, "y": 150,
-        "width": 240, "height": 14,
+        "x": 118, "y": 151,
+        "width": 248, "height": 13,
         "font_size": 8,
         "align": "left"
     },
-    # ── TEL ──────────────────────────────────────────────────
+
+    # ── Row5: TEL ──────────────────────────────────────────
     "hotel_tel": {
         "label": "전화번호(TEL)",
         "type": "text",
-        "x": 385, "y": 150,
-        "width": 165, "height": 14,
+        "x": 392, "y": 151,
+        "width": 175, "height": 13,
         "font_size": 9,
         "align": "left"
     },
@@ -122,7 +144,6 @@ DEFAULT_IMMIGRATION = {
 
 
 DEFAULT_CUSTOMS = {
-    # ── 탑승기명(선박명) / 출발지 ────────────────────────────
     "flight_no": {
         "label": "탑승기명(선박명)",
         "type": "text",
@@ -139,7 +160,6 @@ DEFAULT_CUSTOMS = {
         "font_size": 9,
         "align": "left"
     },
-    # ── 入国日자 (年/月/日) ──────────────────────────────────
     "entry_year": {
         "label": "입국연도(年)",
         "type": "text",
@@ -164,7 +184,6 @@ DEFAULT_CUSTOMS = {
         "font_size": 9,
         "align": "left"
     },
-    # ── 성명(영문) ───────────────────────────────────────────
     "family_name": {
         "label": "성(Surname)",
         "type": "text",
@@ -181,7 +200,6 @@ DEFAULT_CUSTOMS = {
         "font_size": 9,
         "align": "left"
     },
-    # ── 현주소(일본내 체류지) ────────────────────────────────
     "hotel_address": {
         "label": "현주소(체류지)",
         "type": "text",
@@ -190,7 +208,6 @@ DEFAULT_CUSTOMS = {
         "font_size": 8,
         "align": "left"
     },
-    # ── 전화번호 ─────────────────────────────────────────────
     "hotel_tel": {
         "label": "전화번호",
         "type": "text",
@@ -199,7 +216,6 @@ DEFAULT_CUSTOMS = {
         "font_size": 9,
         "align": "left"
     },
-    # ── 국적 / 직업 ──────────────────────────────────────────
     "nationality": {
         "label": "국적",
         "type": "text",
@@ -216,7 +232,6 @@ DEFAULT_CUSTOMS = {
         "font_size": 9,
         "align": "left"
     },
-    # ── 생년월일 (年/月/日) ──────────────────────────────────
     "dob_year": {
         "label": "생년(年)",
         "type": "text",
@@ -241,7 +256,6 @@ DEFAULT_CUSTOMS = {
         "font_size": 9,
         "align": "left"
     },
-    # ── 여권번호 ─────────────────────────────────────────────
     "passport_no": {
         "label": "여권번호",
         "type": "text",
@@ -281,7 +295,6 @@ def get_default_positions(form_type: str) -> dict:
 
 
 def init_default_configs() -> None:
-    """configs 폴더에 기본 JSON 파일이 없으면 생성."""
     for form_type in ["immigration_card", "customs_declaration"]:
         path = get_config_path(form_type)
         if not path.exists():

@@ -493,15 +493,75 @@ elif menu == "4. 양식 위치 설정":
         if st.button("🔄 기본값 초기화"):
             from utils.position_manager import get_default_positions
             _save_session_positions(form_type, get_default_positions(form_type))
-            st.success("초기화 완료!")
+            st.success("초기화 완료! 페이지를 새로고침하세요.")
+
+    # ── 전체 필드 오버레이 시각화 ──────────────────────────
+    st.divider()
+    st.subheader("📍 전체 필드 위치 시각화")
+    st.caption("빨간 박스 = 선택된 필드 / 파란 박스 = 나머지 필드")
+
+    jpg_bytes = (
+        st.session_state.imm_jpg_bytes
+        if form_type == "immigration_card"
+        else st.session_state.cus_jpg_bytes
+    )
+
+    if jpg_bytes:
+        from PIL import Image, ImageDraw, ImageFont
+        from reportlab.lib.pagesizes import A4
+        PAGE_W_REF, PAGE_H_REF = A4
+
+        overlay_img = Image.open(io.BytesIO(jpg_bytes)).convert("RGB")
+        # 배경 흰색 처리
+        gray = overlay_img.convert("L")
+        px = overlay_img.load(); gp = gray.load()
+        for yy in range(overlay_img.height):
+            for xx in range(overlay_img.width):
+                if gp[xx, yy] > 200:
+                    px[xx, yy] = (255, 255, 255)
+
+        iw, ih = overlay_img.size
+        sx, sy = iw / PAGE_W_REF, ih / PAGE_H_REF
+        draw = ImageDraw.Draw(overlay_img)
+
+        for k, v in positions.items():
+            x0 = float(v["x"]) * sx
+            y0 = float(v["y"]) * sy
+            ftype = v.get("type", "text")
+            color = (220, 0, 0) if k == selected_field else (0, 80, 200)
+            lw = 3 if k == selected_field else 1
+
+            if ftype in ["text", "multiline"]:
+                w = float(v.get("width", 60)) * sx
+                h = float(v.get("height", 14)) * sy
+                draw.rectangle([x0, y0 - h, x0 + w, y0 + 4], outline=color, width=lw)
+                draw.text((x0 + 2, y0 - h + 1), k, fill=color)
+            elif ftype == "split_text":
+                gap = float(v.get("cell_gap", 13.5)) * sx
+                for i in range(8):
+                    cx = x0 + i * gap
+                    draw.rectangle([cx, y0 - 12 * sy, cx + gap - 1, y0 + 3], outline=color, width=lw)
+                draw.text((x0, y0 - 12 * sy - 12), k, fill=color)
+            elif ftype == "checkbox":
+                draw.rectangle([x0, y0 - 10 * sy, x0 + 10 * sx, y0 + 3], outline=color, width=lw)
+                draw.text((x0, y0 - 10 * sy - 12), k, fill=color)
+
+        # 상단 400pt만 크롭해서 표시 (카드 영역만)
+        crop_h = int(370 * sy)
+        overlay_img = overlay_img.crop((0, 0, iw, min(crop_h, ih)))
+        overlay_img = overlay_img.resize((iw, min(crop_h, ih)), Image.LANCZOS)
+        st.image(overlay_img, use_container_width=True)
+    else:
+        st.info("💡 사이드바에서 JPG를 업로드하면 필드 위치를 시각적으로 확인할 수 있습니다.")
 
     st.divider()
-    st.subheader("전체 필드 좌표")
+    st.subheader("전체 필드 좌표표")
     st.dataframe(pd.DataFrame([
         {
             "key": k, "label": v.get("label", ""), "type": v.get("type", "text"),
             "x": v.get("x", 0), "y": v.get("y", 0),
             "width": v.get("width", "-"), "font_size": v.get("font_size", 9),
+            "cell_gap": v.get("cell_gap", "-"),
         }
         for k, v in positions.items()
     ]), use_container_width=True)
