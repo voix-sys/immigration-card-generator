@@ -287,12 +287,17 @@ menu = st.sidebar.radio(
         "1. 행사정보 입력",
         "2. 명단 업로드",
         "3. 데이터 검증",
-        "4. 양식 위치 설정",
-        "5. 미리보기",
-        "6. 인쇄 / PDF",
+        "4. 미리보기",
+        "5. 인쇄 / PDF",
     ],
     label_visibility="collapsed",
 )
+
+# 고급설정 (양식 위치 설정) — 접힌 상태로 숨김
+with st.sidebar.expander("⚙ 고급: 양식 위치 설정", expanded=False):
+    st.caption("양식은 고정됩니다. 위치가 맞지 않을 때만 조정하세요.")
+    if st.button("양식 위치 설정 열기", key="open_pos"):
+        st.session_state["_show_pos_editor"] = True
 
 if st.session_state.cleaned_passengers:
     st.sidebar.success(f"✅ 승객 {len(st.session_state.cleaned_passengers)}명")
@@ -574,16 +579,17 @@ elif menu == "3. 데이터 검증":
 
 
 # ══════════════════════════════════════════════════════════════
-# 화면 4: 양식 위치 설정
+# 고급: 양식 위치 설정 (사이드바 버튼으로 진입)
 # ══════════════════════════════════════════════════════════════
-elif menu == "4. 양식 위치 설정":
-    st.title("양식 위치 설정")
-    st.info("📐 좌표 기준: A4 포인트 (좌상단=0,0 / A4=595×842pt)\n\n5번 미리보기와 함께 번갈아 보면서 조정하세요.")
+if st.session_state.get("_show_pos_editor"):
+    st.title("양식 위치 설정 (고급)")
+    st.info("📐 좌표 기준: A4 포인트 (좌상단=0,0 / A4=595×842pt)\n\n4번 미리보기와 함께 번갈아 보면서 조정하세요.")
 
     form_sel = st.radio(
         "양식 선택",
         ["출입국카드 (外国人入国記録)", "휴대품신고서 (휴대품·별송품)"],
         horizontal=True,
+        key="pos_form_sel",
     )
     form_type = "immigration_card" if "출입국" in form_sel else "customs_declaration"
     positions = _get_positions(form_type)
@@ -605,8 +611,6 @@ elif menu == "4. 양식 위치 설정":
         if pos.get("type") in ["text", "multiline"]:
             pos["width"] = st.number_input("Width (pt)", value=float(pos.get("width", 100)), step=0.5, format="%.1f")
             pos["height"] = st.number_input("Height (pt)", value=float(pos.get("height", 16)), step=0.5, format="%.1f")
-        elif pos.get("type") == "split_text":
-            pos["cell_gap"] = st.number_input("Cell Gap (pt)", value=float(pos.get("cell_gap", 13.5)), step=0.5, format="%.1f")
     with col3:
         pos["font_size"] = st.number_input(
             "Font Size (pt)", value=float(pos.get("font_size", 9)),
@@ -615,18 +619,22 @@ elif menu == "4. 양식 위치 설정":
 
     positions[selected_field] = pos
 
-    col_save, col_reset = st.columns([1, 4])
+    col_save, col_reset, col_close = st.columns([1, 1, 4])
     with col_save:
         if st.button("💾 저장", type="primary"):
             _save_session_positions(form_type, positions)
             st.success("저장 완료!")
     with col_reset:
-        if st.button("🔄 기본값 초기화"):
+        if st.button("🔄 초기화"):
             from utils.position_manager import get_default_positions
             _save_session_positions(form_type, get_default_positions(form_type))
-            st.success("초기화 완료! 페이지를 새로고침하세요.")
+            st.success("초기화 완료!")
+    with col_close:
+        if st.button("✕ 닫기"):
+            st.session_state["_show_pos_editor"] = False
+            st.rerun()
 
-    # ── 전체 필드 오버레이 시각화 ──────────────────────────
+    # 오버레이 시각화
     st.divider()
     st.subheader("📍 전체 필드 위치 시각화")
     st.caption("빨간 박스 = 선택된 필드 / 파란 박스 = 나머지 필드")
@@ -638,12 +646,11 @@ elif menu == "4. 양식 위치 설정":
     )
 
     if jpg_bytes:
-        from PIL import Image, ImageDraw, ImageFont
+        from PIL import Image, ImageDraw
         from reportlab.lib.pagesizes import A4
         PAGE_W_REF, PAGE_H_REF = A4
 
         overlay_img = Image.open(io.BytesIO(jpg_bytes)).convert("RGB")
-        # 배경 흰색 처리
         gray = overlay_img.convert("L")
         px = overlay_img.load(); gp = gray.load()
         for yy in range(overlay_img.height):
@@ -652,56 +659,46 @@ elif menu == "4. 양식 위치 설정":
                     px[xx, yy] = (255, 255, 255)
 
         iw, ih = overlay_img.size
-        sx, sy = iw / PAGE_W_REF, ih / PAGE_H_REF
+        sx_ov, sy_ov = iw / PAGE_W_REF, ih / PAGE_H_REF
         draw = ImageDraw.Draw(overlay_img)
 
         for k, v in positions.items():
-            x0 = float(v["x"]) * sx
-            y0 = float(v["y"]) * sy
+            x0 = float(v["x"]) * sx_ov
+            y0 = float(v["y"]) * sy_ov
             ftype = v.get("type", "text")
             color = (220, 0, 0) if k == selected_field else (0, 80, 200)
             lw = 3 if k == selected_field else 1
 
             if ftype in ["text", "multiline"]:
-                w = float(v.get("width", 60)) * sx
-                h = float(v.get("height", 14)) * sy
+                w = float(v.get("width", 60)) * sx_ov
+                h = float(v.get("height", 14)) * sy_ov
                 draw.rectangle([x0, y0 - h, x0 + w, y0 + 4], outline=color, width=lw)
                 draw.text((x0 + 2, y0 - h + 1), k, fill=color)
-            elif ftype == "split_text":
-                gap = float(v.get("cell_gap", 13.5)) * sx
-                for i in range(8):
-                    cx = x0 + i * gap
-                    draw.rectangle([cx, y0 - 12 * sy, cx + gap - 1, y0 + 3], outline=color, width=lw)
-                draw.text((x0, y0 - 12 * sy - 12), k, fill=color)
             elif ftype == "checkbox":
-                draw.rectangle([x0, y0 - 10 * sy, x0 + 10 * sx, y0 + 3], outline=color, width=lw)
-                draw.text((x0, y0 - 10 * sy - 12), k, fill=color)
+                draw.rectangle([x0, y0 - 10 * sy_ov, x0 + 10 * sx_ov, y0 + 3], outline=color, width=lw)
+                draw.text((x0, y0 - 10 * sy_ov - 12), k, fill=color)
 
-        # 상단 400pt만 크롭해서 표시 (카드 영역만)
-        crop_h = int(370 * sy)
+        crop_h = int(370 * sy_ov)
         overlay_img = overlay_img.crop((0, 0, iw, min(crop_h, ih)))
-        overlay_img = overlay_img.resize((iw, min(crop_h, ih)), Image.LANCZOS)
         st.image(overlay_img, use_container_width=True)
     else:
-        st.info("💡 사이드바에서 JPG를 업로드하면 필드 위치를 시각적으로 확인할 수 있습니다.")
+        st.info("JPG가 자동 로드됩니다. templates/ 폴더를 확인하세요.")
 
     st.divider()
-    st.subheader("전체 필드 좌표표")
+    st.subheader("전체 좌표표")
     st.dataframe(pd.DataFrame([
         {
             "key": k, "label": v.get("label", ""), "type": v.get("type", "text"),
             "x": v.get("x", 0), "y": v.get("y", 0),
             "width": v.get("width", "-"), "font_size": v.get("font_size", 9),
-            "cell_gap": v.get("cell_gap", "-"),
         }
         for k, v in positions.items()
     ]), use_container_width=True)
 
-
 # ══════════════════════════════════════════════════════════════
-# 화면 5: 미리보기
+# 화면 4: 미리보기
 # ══════════════════════════════════════════════════════════════
-elif menu == "5. 미리보기":
+elif menu == "4. 미리보기":
     st.title("미리보기")
 
     if not st.session_state.cleaned_passengers:
@@ -746,14 +743,12 @@ elif menu == "5. 미리보기":
             caption=f"{passenger.get('영문이름', '')} — {form_choice}",
             use_container_width=True,
         )
-        if not jpg_bytes:
-            st.info("💡 사이드바에서 JPG를 업로드하면 실제 양식 위에 미리보기가 표시됩니다.")
 
 
 # ══════════════════════════════════════════════════════════════
-# 화면 6: 인쇄 / PDF
+# 화면 5: 인쇄 / PDF
 # ══════════════════════════════════════════════════════════════
-elif menu == "6. 인쇄 / PDF":
+elif menu == "5. 인쇄 / PDF":
     st.title("인쇄 / PDF 생성")
 
     if not st.session_state.cleaned_passengers:

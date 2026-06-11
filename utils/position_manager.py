@@ -24,119 +24,129 @@ CONFIG_DIR = Path(__file__).parent.parent / "configs"
 # ──────────────────────────────────────────────────────────────
 
 DEFAULT_IMMIGRATION = {
-    # ── Row1: 氏名 / Name ──────────────────────────────────
+    # ── 氏名/Name row  (y=17.8-40.9pt) ───────────────────
+    # Family/Given divider detected at x=229.2pt
     "family_name": {
         "label": "성(Family Name)",
         "type": "text",
-        "x": 168, "y": 53,
-        "width": 182, "height": 15,
+        "x": 63, "y": 32,
+        "width": 163, "height": 14,
         "font_size": 10,
         "align": "left"
     },
     "given_name": {
         "label": "이름(Given Names)",
         "type": "text",
-        "x": 362, "y": 53,
-        "width": 205, "height": 15,
+        "x": 232, "y": 32,
+        "width": 217, "height": 14,
         "font_size": 10,
         "align": "left"
     },
 
-    # ── Row2: 生年月日 (DDMMYYYY, 한 글자씩) ───────────────
-    # 카드 순서: Day(2자) · Month(2자) · Year(4자)
-    # 각 칸 폭 ≈ 13pt, Day시작 x≈118, Month x≈150, Year x≈184
-    "dob_split": {
-        "label": "생년월일(DDMMYYYY 칸분리)",
-        "type": "split_text",
-        "x": 118, "y": 79,
-        "cell_gap": 13.5,
-        "font_size": 9
+    # ── 生年月日/DOB row  (y=40.9-63.2pt) ─────────────────
+    # Day boxes: x=59-77pt · Month: x=82-105pt · Year: x=107-145pt
+    "dob_day": {
+        "label": "일(Day)",
+        "type": "text",
+        "x": 63, "y": 53,
+        "width": 15, "height": 12,
+        "font_size": 9,
+        "align": "left"
     },
-
-    # ── Row2: 国名 Country name ────────────────────────────
-    # 现住所(빈칸) 다음, 国名 헤더 뒤 입력 영역
+    "dob_month": {
+        "label": "월(Month)",
+        "type": "text",
+        "x": 82, "y": 53,
+        "width": 15, "height": 12,
+        "font_size": 9,
+        "align": "left"
+    },
+    "dob_year": {
+        "label": "년(Year)",
+        "type": "text",
+        "x": 107, "y": 53,
+        "width": 32, "height": 12,
+        "font_size": 9,
+        "align": "left"
+    },
+    # Country divider near x=291pt · City starts ~x=298pt
     "country": {
         "label": "국명(Country name)",
         "type": "text",
-        "x": 268, "y": 79,
-        "width": 102, "height": 15,
-        "font_size": 9,
+        "x": 233, "y": 53,
+        "width": 55, "height": 12,
+        "font_size": 8,
         "align": "left"
     },
-
-    # ── Row2: 都市名 City name ─────────────────────────────
     "city": {
         "label": "도시명(City name)",
         "type": "text",
-        "x": 393, "y": 79,
-        "width": 174, "height": 15,
-        "font_size": 9,
-        "align": "left"
-    },
-
-    # ── Row3: 渡航目的 체크박스 ────────────────────────────
-    # □ 칸 안에 X 표시 — □ 위치에서 약간 오른쪽/아래
-    "purpose_tourism": {
-        "label": "목적: 관광(Tourism) □",
-        "type": "checkbox",
-        "x": 112, "y": 105,
-        "font_size": 9
-    },
-    "purpose_business": {
-        "label": "목적: 상용(Business) □",
-        "type": "checkbox",
-        "x": 203, "y": 105,
-        "font_size": 9
-    },
-    "purpose_relatives": {
-        "label": "목적: 친족(Visiting relatives) □",
-        "type": "checkbox",
-        "x": 296, "y": 105,
-        "font_size": 9
-    },
-    "purpose_others": {
-        "label": "목적: 기타(Others) □",
-        "type": "checkbox",
-        "x": 112, "y": 127,
-        "font_size": 9
-    },
-
-    # ── Row3: 航空機便名 / Flight No. ──────────────────────
-    "flight_no": {
-        "label": "항공편명(Flight No.)",
-        "type": "text",
-        "x": 408, "y": 104,
-        "width": 155, "height": 14,
-        "font_size": 9,
-        "align": "left"
-    },
-
-    # ── Row4: 日本滞在予定期間 / Stay duration ─────────────
-    "stay_duration": {
-        "label": "체류예정기간(Stay duration)",
-        "type": "text",
-        "x": 408, "y": 124,
-        "width": 155, "height": 14,
-        "font_size": 9,
-        "align": "left"
-    },
-
-    # ── Row5: 日本の連絡先 / Address in Japan ──────────────
-    "hotel_name": {
-        "label": "호텔명(Address in Japan)",
-        "type": "text",
-        "x": 118, "y": 151,
-        "width": 248, "height": 13,
+        "x": 298, "y": 53,
+        "width": 150, "height": 12,
         "font_size": 8,
         "align": "left"
     },
 
-    # ── Row5: TEL ──────────────────────────────────────────
+    # ── 渡航目的/Purpose row 1  (y=63.2-83.4pt) ───────────
+    # Checkboxes: 観光 x=59-146pt · 商用 x=146-226pt · 親族 x=226-265pt
+    # Flight No. section starts x=265pt
+    "purpose_tourism": {
+        "label": "관광(Tourism) □",
+        "type": "checkbox",
+        "x": 62, "y": 73,
+        "font_size": 9
+    },
+    "purpose_business": {
+        "label": "상용(Business) □",
+        "type": "checkbox",
+        "x": 149, "y": 73,
+        "font_size": 9
+    },
+    "purpose_relatives": {
+        "label": "친족방문(Visiting relatives) □",
+        "type": "checkbox",
+        "x": 228, "y": 73,
+        "font_size": 9
+    },
+    "flight_no": {
+        "label": "항공편명(Flight No.)",
+        "type": "text",
+        "x": 293, "y": 73,
+        "width": 155, "height": 12,
+        "font_size": 9,
+        "align": "left"
+    },
+
+    # ── Purpose row 2 / Others  (y=83.4-103.2pt) ──────────
+    "purpose_others": {
+        "label": "기타(Others) □",
+        "type": "checkbox",
+        "x": 62, "y": 93,
+        "font_size": 9
+    },
+    "stay_duration": {
+        "label": "체류예정기간(Stay duration)",
+        "type": "text",
+        "x": 293, "y": 93,
+        "width": 155, "height": 12,
+        "font_size": 9,
+        "align": "left"
+    },
+
+    # ── 日本の連絡先/Address row  (y=103.2-128.8pt) ────────
+    "hotel_name": {
+        "label": "호텔명/주소(Address in Japan)",
+        "type": "text",
+        "x": 63, "y": 119,
+        "width": 238, "height": 12,
+        "font_size": 8,
+        "align": "left"
+    },
     "hotel_tel": {
         "label": "전화번호(TEL)",
         "type": "text",
-        "x": 392, "y": 151,
-        "width": 175, "height": 13,
+        "x": 310, "y": 119,
+        "width": 138, "height": 12,
         "font_size": 9,
         "align": "left"
     },

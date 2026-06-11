@@ -140,14 +140,18 @@ def _build_immigration_fields(passenger: dict, common: dict) -> dict:
     given = parts[1] if len(parts) > 1 else ""
 
     dob = str(passenger.get("생년월일", ""))
-    dob_dmyyyy = dob[6:8] + dob[4:6] + dob[0:4] if len(dob) == 8 else ""
+    dob_d = dob[6:8] if len(dob) == 8 else ""
+    dob_m = dob[4:6] if len(dob) == 8 else ""
+    dob_y = dob[0:4] if len(dob) == 8 else ""
 
     purpose = common.get("여행목적", "관광")
 
     return {
         "family_name": family,
         "given_name": given,
-        "dob_split": dob_dmyyyy,
+        "dob_day":   dob_d,
+        "dob_month": dob_m,
+        "dob_year":  dob_y,
         "country": common.get("국적", ""),
         "city": common.get("도시", ""),
         "purpose_tourism":   purpose in ["관광", "Tourism", "tourism", ""],
