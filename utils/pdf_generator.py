@@ -198,13 +198,9 @@ def _add_page(c: canvas.Canvas, template_path: Optional[str],
                     0, 0, width=PAGE_W, height=PAGE_H,
                     preserveAspectRatio=False)
     else:
-        # 템플릿 없음 → 빈 흰 배경 + 안내 텍스트
-        c.setFillColorRGB(0.95, 0.95, 0.95)
+        # 템플릿 없음 → 흰 배경만 (텍스트 없음)
+        c.setFillColorRGB(1, 1, 1)
         c.rect(0, 0, PAGE_W, PAGE_H, fill=1)
-        c.setFillColorRGB(0.7, 0, 0)
-        c.setFont(_DEFAULT_FONT, 10)
-        c.drawCentredString(PAGE_W / 2, PAGE_H - 30,
-                            "[ Template JPG not found — data overlay only ]")
         c.setFillColorRGB(0, 0, 0)
 
     c.setFillColorRGB(0, 0, 0)
