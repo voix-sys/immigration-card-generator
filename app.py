@@ -213,10 +213,29 @@ if menu == "1. 행사정보 입력":
         ci["국적"] = st.text_input("국적 (Nationality)", value=ci["국적"]).upper()
         ci["도시"] = st.text_input("출발도시 (Departure City)", value=ci["도시"]).upper()
         ci["입국편명"] = st.text_input("입국편명 (Flight No.)", value=ci["입국편명"]).upper()
-        ci["여행기간"] = st.text_input("체류예정기간 (Stay Duration)", value=ci["여행기간"],
-                                       help="예: 7 DAYS / 3 NIGHTS 4 DAYS")
-        ci["입국일"] = st.text_input("입국일 (Entry Date)", value=ci["입국일"],
-                                     help="YYYY-MM-DD 형식")
+        stay_options = [f"{i} DAY{'S' if i > 1 else ''}" for i in range(1, 6)] + ["직접입력"]
+        current_stay = ci["여행기간"]
+        stay_sel = st.selectbox(
+            "체류예정기간 (Stay Duration)",
+            stay_options,
+            index=stay_options.index(current_stay) if current_stay in stay_options else len(stay_options) - 1,
+        )
+        if stay_sel == "직접입력":
+            ci["여행기간"] = st.text_input("직접 입력", value=current_stay if current_stay not in stay_options[:-1] else "")
+        else:
+            ci["여행기간"] = stay_sel
+
+        today = date.today()
+        date_options = [str(today + __import__('datetime').timedelta(days=i)) for i in range(0, 15)]
+        date_options_display = [(d, f"{d} ({['월','화','수','목','금','토','일'][date.fromisoformat(d).weekday()]})") for d in date_options]
+        current_date = ci["입국일"]
+        date_sel = st.selectbox(
+            "입국일 (Entry Date)",
+            [d for d, _ in date_options_display],
+            format_func=lambda d: next(label for dd, label in date_options_display if dd == d),
+            index=date_options.index(current_date) if current_date in date_options else 0,
+        )
+        ci["입국일"] = date_sel
         ci["여행목적"] = st.selectbox(
             "여행목적 (Purpose)",
             ["관광", "상용", "친족방문", "기타"],
