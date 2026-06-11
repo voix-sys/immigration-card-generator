@@ -211,8 +211,30 @@ if menu == "1. 행사정보 입력":
     col1, col2 = st.columns(2)
     with col1:
         ci["국적"] = st.text_input("국적 (Nationality)", value=ci["국적"]).upper()
-        ci["도시"] = st.text_input("출발도시 (Departure City)", value=ci["도시"]).upper()
-        ci["입국편명"] = st.text_input("입국편명 (Flight No.)", value=ci["입국편명"]).upper()
+
+        city_options = ["BUSAN", "DAEGU", "INCHEON", "직접입력"]
+        current_city = ci["도시"]
+        city_sel = st.selectbox(
+            "출발도시 (Departure City)",
+            city_options,
+            index=city_options.index(current_city) if current_city in city_options else len(city_options) - 1,
+        )
+        if city_sel == "직접입력":
+            ci["도시"] = st.text_input("도시 직접 입력", value=current_city if current_city not in city_options[:-1] else "").upper()
+        else:
+            ci["도시"] = city_sel
+
+        flight_options = ["BX143", "BX124", "BX148", "BX182", "TW311", "직접입력"]
+        current_flight = ci["입국편명"]
+        flight_sel = st.selectbox(
+            "입국편명 (Flight No.)",
+            flight_options,
+            index=flight_options.index(current_flight) if current_flight in flight_options else len(flight_options) - 1,
+        )
+        if flight_sel == "직접입력":
+            ci["입국편명"] = st.text_input("편명 직접 입력", value=current_flight if current_flight not in flight_options[:-1] else "").upper()
+        else:
+            ci["입국편명"] = flight_sel
         stay_options = [f"{i} DAY{'S' if i > 1 else ''}" for i in range(1, 6)] + ["직접입력"]
         current_stay = ci["여행기간"]
         stay_sel = st.selectbox(
