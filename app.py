@@ -184,19 +184,32 @@ else:
 st.sidebar.divider()
 st.sidebar.markdown("**양식 JPG 업로드**")
 
-imm_upload = st.sidebar.file_uploader(
-    "출입국카드 JPG", type=["jpg", "jpeg", "png"], key="upload_imm"
-)
-if imm_upload:
-    st.session_state.imm_jpg_bytes = imm_upload.read()
-    st.sidebar.success("출입국카드 ✅")
+# 레포 내 templates/ 폴더에서 자동 로드
+_TEMPLATE_DIR = Path(__file__).parent / "templates"
+_IMM_JPG = _TEMPLATE_DIR / "immigration_card.jpg"
+_CUS_JPG = _TEMPLATE_DIR / "customs_declaration.jpg"
 
-cus_upload = st.sidebar.file_uploader(
-    "휴대품신고서 JPG", type=["jpg", "jpeg", "png"], key="upload_cus"
-)
-if cus_upload:
-    st.session_state.cus_jpg_bytes = cus_upload.read()
-    st.sidebar.success("휴대품신고서 ✅")
+if st.session_state.imm_jpg_bytes is None and _IMM_JPG.exists():
+    st.session_state.imm_jpg_bytes = _IMM_JPG.read_bytes()
+if st.session_state.cus_jpg_bytes is None and _CUS_JPG.exists():
+    st.session_state.cus_jpg_bytes = _CUS_JPG.read_bytes()
+
+# 상태 표시
+imm_ok = st.session_state.imm_jpg_bytes is not None
+cus_ok = st.session_state.cus_jpg_bytes is not None
+st.sidebar.markdown(f"{'✅' if imm_ok else '❌'} 출입국카드 JPG")
+st.sidebar.markdown(f"{'✅' if cus_ok else '❌'} 휴대품신고서 JPG")
+
+# 수동 교체용 (필요시)
+with st.sidebar.expander("JPG 교체 (선택사항)"):
+    imm_upload = st.file_uploader("출입국카드 교체", type=["jpg","jpeg","png"], key="upload_imm")
+    if imm_upload:
+        st.session_state.imm_jpg_bytes = imm_upload.read()
+        st.rerun()
+    cus_upload = st.file_uploader("휴대품신고서 교체", type=["jpg","jpeg","png"], key="upload_cus")
+    if cus_upload:
+        st.session_state.cus_jpg_bytes = cus_upload.read()
+        st.rerun()
 
 
 # ══════════════════════════════════════════════════════════════
