@@ -34,47 +34,118 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-  /* 전체 배경 흰색 */
-  .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+  /* ── 전체 배경 ── */
+  .stApp,
+  [data-testid="stAppViewContainer"],
+  [data-testid="stMain"],
+  [data-testid="block-container"],
+  section[data-testid="stMainBlockContainer"],
+  .main, .block-container { background-color: #ffffff !important; }
+
+  /* ── 사이드바 ── */
+  [data-testid="stSidebar"],
+  [data-testid="stSidebar"] > div { background-color: #f0f0f0 !important; }
+
+  /* ── 모든 텍스트 검정 ── */
+  *, *::before, *::after { color: #111111 !important; }
+
+  /* ── 입력창 ── */
+  input, textarea,
+  [data-baseweb="input"] input,
+  [data-baseweb="textarea"] textarea {
       background-color: #ffffff !important;
+      color: #111111 !important;
+      border-color: #aaaaaa !important;
   }
-  /* 사이드바 배경 */
-  [data-testid="stSidebar"] {
-      background-color: #f5f5f5 !important;
-  }
-  /* 모든 텍스트 검정 */
-  html, body, [class*="css"], .stMarkdown, .stText, label,
-  p, h1, h2, h3, h4, h5, h6, span, div {
+
+  /* ── selectbox 드롭다운 ── */
+  [data-baseweb="select"] > div,
+  [data-baseweb="select"] span,
+  [data-baseweb="popover"] li,
+  [data-baseweb="menu"] ul,
+  [role="listbox"],
+  [role="option"] {
+      background-color: #ffffff !important;
       color: #111111 !important;
   }
-  /* 입력 필드 */
-  input, textarea, select {
+  [role="option"]:hover { background-color: #e8eaf6 !important; }
+
+  /* ── number_input 버튼 포함 ── */
+  [data-testid="stNumberInput"] > div,
+  [data-testid="stNumberInput"] button {
       background-color: #ffffff !important;
       color: #111111 !important;
-      border: 1px solid #cccccc !important;
+      border-color: #aaaaaa !important;
   }
-  /* 버튼 */
+
+  /* ── radio / checkbox ── */
+  [data-testid="stRadio"] > div,
+  [data-testid="stCheckbox"] > div { background-color: transparent !important; }
+
+  /* ── metric 카드 ── */
+  [data-testid="metric-container"],
+  [data-testid="stMetric"],
+  [data-testid="stMetricValue"],
+  [data-testid="stMetricLabel"] {
+      background-color: #f5f7ff !important;
+      color: #111111 !important;
+  }
+
+  /* ── expander ── */
+  [data-testid="stExpander"],
+  [data-testid="stExpander"] > div,
+  details, summary {
+      background-color: #f9f9f9 !important;
+      color: #111111 !important;
+      border-color: #cccccc !important;
+  }
+
+  /* ── info / success / warning / error 박스 ── */
+  [data-testid="stAlert"],
+  [data-testid="stAlert"] > div,
+  [data-testid="stAlert"] p { color: #111111 !important; }
+
+  /* ── JSON 표시 ── */
+  [data-testid="stJson"],
+  .stJson { background-color: #f5f5f5 !important; color: #111111 !important; }
+
+  /* ── 데이터프레임 / 테이블 ── */
+  [data-testid="stDataFrame"],
+  .dvn-scroller, .glideDataEditor,
+  .stDataFrame { background-color: #ffffff !important; }
+
+  /* ── 탭 ── */
+  [data-testid="stTabs"] [role="tablist"],
+  [data-testid="stTabs"] [role="tab"] {
+      background-color: #f0f0f0 !important;
+      color: #111111 !important;
+  }
+  [data-testid="stTabs"] [role="tab"][aria-selected="true"] {
+      background-color: #ffffff !important;
+      border-bottom: 2px solid #1a56db !important;
+  }
+
+  /* ── divider ── */
+  hr { border-color: #cccccc !important; }
+
+  /* ── 버튼 ── */
+  [data-testid="stButton"] > button,
   .stButton > button {
       background-color: #1a56db !important;
       color: #ffffff !important;
       border: none !important;
   }
-  .stButton > button:hover {
-      background-color: #1245b5 !important;
+  [data-testid="stButton"] > button:hover,
+  .stButton > button:hover { background-color: #1245b5 !important; }
+
+  /* ── 다운로드 버튼 ── */
+  [data-testid="stDownloadButton"] > button {
+      background-color: #0e7c3a !important;
+      color: #ffffff !important;
   }
-  /* 데이터 테이블 */
-  [data-testid="stDataFrame"] {
-      background-color: #ffffff !important;
-  }
-  /* info / success / warning 박스 */
-  [data-testid="stAlert"] {
-      color: #111111 !important;
-  }
-  /* selectbox, radio */
-  [data-testid="stSelectbox"] label,
-  [data-testid="stRadio"] label {
-      color: #111111 !important;
-  }
+
+  /* ── code 블록 ── */
+  code, pre { background-color: #f3f3f3 !important; color: #333333 !important; }
 </style>
 """, unsafe_allow_html=True)
 
