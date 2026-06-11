@@ -34,11 +34,9 @@ st.set_page_config(
 # ── 호텔 프리셋 ────────────────────────────────────────────────
 HOTEL_PRESETS = [
     {"name": "직접입력", "hotel": "", "tel": ""},
-    {"name": "신주쿠 그랜벨 호텔", "hotel": "SHINJUKU GRANBELL HOTEL", "tel": "03-5272-3730"},
-    {"name": "도쿄 스테이션 호텔", "hotel": "THE TOKYO STATION HOTEL", "tel": "03-5220-1111"},
-    {"name": "힐튼 도쿄", "hotel": "HILTON TOKYO", "tel": "03-3344-5111"},
-    {"name": "오사카 리가로얄 호텔", "hotel": "RIHGA ROYAL HOTEL OSAKA", "tel": "06-6448-1121"},
-    {"name": "후쿠오카 하카타 엑셀 호텔", "hotel": "HAKATA EXCEL HOTEL TOKYU", "tel": "092-262-0109"},
+    {"name": "후쿠오카", "hotel": "U-BELL HOTEL", "tel": "0927-61-0345"},
+    {"name": "대마도", "hotel": "SOAR RESORT", "tel": "0920-54-8802"},
+    {"name": "후쿠오카(벳부)", "hotel": "BEPPU SUGINOI HOTEL", "tel": "0977-24-1141"},
 ]
 
 # ── 세션 상태 초기화 ───────────────────────────────────────────
