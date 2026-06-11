@@ -19,9 +19,8 @@ from utils.validator import validate_all, validate_passenger
 from utils.position_manager import (
     load_positions, save_positions, init_default_configs,
 )
-from utils.pdf_generator import (
-    generate_single_pdf, generate_combined_pdf, generate_preview_image,
-)
+from utils.pdf_generator import generate_combined_pdf
+from fill_card import fill_card, passenger_to_card_data
 
 # ── 초기화 ─────────────────────────────────────────────────────
 init_default_configs()
@@ -333,6 +332,29 @@ with st.sidebar.expander("JPG 교체 (선택사항)"):
     if cus_upload:
         st.session_state.cus_jpg_bytes = cus_upload.read()
         st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════
+# 공통 헬퍼: fill_card로 출입국카드 PIL 이미지 생성
+# ══════════════════════════════════════════════════════════════
+def _render_imm_image(passenger: dict, common: dict):
+    """출입국카드 1장을 fill_card.py로 렌더링 → PIL Image 반환."""
+    from PIL import Image as _PILImage
+    data = passenger_to_card_data(passenger, common)
+    jpg_bytes = st.session_state.imm_jpg_bytes
+    if not jpg_bytes:
+        return _PILImage.new("RGB", (1494, 2012), (255, 255, 255))
+    tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+    tmp_in.write(jpg_bytes); tmp_in.close()
+    tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+    tmp_out.close()
+    try:
+        fill_card(tmp_in.name, data, tmp_out.name)
+    finally:
+        os.unlink(tmp_in.name)
+    img = _PILImage.open(tmp_out.name).copy()
+    os.unlink(tmp_out.name)
+    return img
 
 
 # ══════════════════════════════════════════════════════════════
@@ -707,7 +729,7 @@ elif menu == "4. 미리보기":
         passengers = st.session_state.cleaned_passengers
         common = st.session_state.common_info
 
-        col_ctrl1, col_ctrl2, col_ctrl3 = st.columns([2, 2, 1])
+        col_ctrl1, col_ctrl2 = st.columns([3, 1])
         with col_ctrl1:
             pax_idx = st.selectbox(
                 "승객 선택",
@@ -715,28 +737,23 @@ elif menu == "4. 미리보기":
                 format_func=lambda i: f"{passengers[i].get('NO', '')}: {passengers[i].get('영문이름', '')}",
             )
         with col_ctrl2:
-            form_choice = st.radio("양식", ["출입국카드", "휴대품신고서"], horizontal=True)
-        with col_ctrl3:
-            scale = st.slider("확대/축소", 0.3, 1.5, 0.6, 0.1)
+            form_choice = st.radio("양식", ["출입국카드", "휴대품신고서"], horizontal=False)
 
-        form_type = "immigration_card" if form_choice == "출입국카드" else "customs_declaration"
-        positions = _get_positions(form_type)
         passenger = passengers[pax_idx]
 
-        jpg_bytes = (
-            st.session_state.imm_jpg_bytes
-            if form_type == "immigration_card"
-            else st.session_state.cus_jpg_bytes
-        )
-        tmp_jpg = None
-        if jpg_bytes:
-            tmp_jpg = _write_jpg_to_tmp(jpg_bytes)
-
-        preview_img = generate_preview_image(
-            form_type, passenger, common, positions, tmp_jpg, scale=scale
-        )
-        if tmp_jpg:
-            os.unlink(tmp_jpg)
+        if form_choice == "출입국카드":
+            preview_img = _render_imm_image(passenger, common)
+        else:
+            # 휴대품신고서: 기존 방식 유지
+            from utils.pdf_generator import generate_preview_image
+            positions = _get_positions("customs_declaration")
+            jpg_bytes = st.session_state.cus_jpg_bytes
+            tmp_jpg = _write_jpg_to_tmp(jpg_bytes) if jpg_bytes else None
+            preview_img = generate_preview_image(
+                "customs_declaration", passenger, common, positions, tmp_jpg, scale=1.0
+            )
+            if tmp_jpg:
+                os.unlink(tmp_jpg)
 
         st.image(
             preview_img,
@@ -757,10 +774,7 @@ elif menu == "5. 인쇄 / PDF":
         passengers = st.session_state.cleaned_passengers
         common = st.session_state.common_info
 
-        # ── 출력 설정 ──────────────────────────────────────
-        st.subheader("출력 설정")
         col1, col2 = st.columns(2)
-
         with col1:
             target = st.radio("출력 대상", ["전체 승객", "선택 승객"])
             if target == "선택 승객":
@@ -780,47 +794,39 @@ elif menu == "5. 인쇄 / PDF":
 
         n = len(selected_passengers)
         st.info(f"출력 예정: {n}명")
-
         if n == 0:
             st.stop()
-
-        imm_positions = _get_positions("immigration_card")
-        cus_positions = _get_positions("customs_declaration")
-
-        imm_tmp = _write_jpg_to_tmp(st.session_state.imm_jpg_bytes) if st.session_state.imm_jpg_bytes else None
-        cus_tmp = _write_jpg_to_tmp(st.session_state.cus_jpg_bytes) if st.session_state.cus_jpg_bytes else None
 
         st.divider()
 
         # ══════════════════════════════════════════════════
-        # 웹 인쇄 (브라우저 인쇄 대화상자)
+        # 웹 인쇄 (권장)
         # ══════════════════════════════════════════════════
         st.subheader("🖨 웹 인쇄 (권장)")
-        st.caption("버튼 클릭 → 새 탭에서 미리보기 → Ctrl+P (또는 인쇄 버튼)")
+        st.caption("버튼 클릭 → 새 탭 열림 → Ctrl+P")
 
         if st.button("🖨 인쇄 미리보기 열기", type="primary"):
-            with st.spinner("이미지 생성 중..."):
+            with st.spinner(f"{n}명 이미지 생성 중..."):
                 images_b64 = []
+                cus_positions = _get_positions("customs_declaration")
+                cus_tmp = _write_jpg_to_tmp(st.session_state.cus_jpg_bytes) if st.session_state.cus_jpg_bytes else None
+
                 for p in selected_passengers:
                     if include_imm:
-                        img = generate_preview_image(
-                            "immigration_card", p, common,
-                            imm_positions, imm_tmp, scale=1.0
-                        )
+                        img = _render_imm_image(p, common)
                         images_b64.append(_img_to_base64(img))
                     if include_cus:
+                        from utils.pdf_generator import generate_preview_image
                         img = generate_preview_image(
                             "customs_declaration", p, common,
                             cus_positions, cus_tmp, scale=1.0
                         )
                         images_b64.append(_img_to_base64(img))
 
-            html = _build_print_html(
-                images_b64,
-                title=f"입국서류 {n}명"
-            )
+                if cus_tmp and os.path.exists(cus_tmp):
+                    os.unlink(cus_tmp)
 
-            # base64로 인코딩해서 새 탭 링크 제공
+            html = _build_print_html(images_b64, title=f"입국서류 {n}명")
             html_b64 = base64.b64encode(html.encode("utf-8")).decode()
             js = f"""
             <script>
@@ -831,13 +837,13 @@ elif menu == "5. 인쇄 / PDF":
             </script>
             """
             components.html(js, height=0)
-            st.success(f"✅ {len(images_b64)}페이지 생성 완료 — 새 탭이 열립니다.")
-            st.info("팝업이 차단된 경우: 브라우저 주소창 우측의 팝업 허용 버튼을 클릭하세요.")
+            st.success(f"✅ {len(images_b64)}페이지 — 새 탭이 열립니다.")
+            st.info("팝업 차단 시: 주소창 우측 팝업 허용 클릭")
 
         st.divider()
 
         # ══════════════════════════════════════════════════
-        # PDF 다운로드
+        # PDF 다운로드 (출입국카드: PIL→PDF / 휴대품: reportlab)
         # ══════════════════════════════════════════════════
         st.subheader("📄 PDF 다운로드")
 
@@ -846,51 +852,70 @@ elif menu == "5. 인쇄 / PDF":
         with col_a:
             if st.button("📄 통합 PDF 생성"):
                 with st.spinner("PDF 생성 중..."):
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as f:
-                        tmp_out = f.name
-                    result = generate_combined_pdf(
-                        passengers=selected_passengers,
-                        common=common,
-                        imm_positions=imm_positions,
-                        cus_positions=cus_positions,
-                        imm_template=imm_tmp,
-                        cus_template=cus_tmp,
-                        output_path=tmp_out,
-                        include_immigration=include_imm,
-                        include_customs=include_cus,
-                    )
-                    with open(tmp_out, "rb") as f:
-                        pdf_bytes = f.read()
-                    os.unlink(tmp_out)
+                    pages = []
+                    cus_positions = _get_positions("customs_declaration")
+                    cus_tmp = _write_jpg_to_tmp(st.session_state.cus_jpg_bytes) if st.session_state.cus_jpg_bytes else None
+
+                    for p in selected_passengers:
+                        if include_imm:
+                            pages.append(_render_imm_image(p, common).convert("RGB"))
+                        if include_cus:
+                            from utils.pdf_generator import generate_preview_image
+                            img = generate_preview_image(
+                                "customs_declaration", p, common,
+                                cus_positions, cus_tmp, scale=1.0
+                            )
+                            pages.append(img.convert("RGB"))
+
+                    if cus_tmp and os.path.exists(cus_tmp):
+                        os.unlink(cus_tmp)
+
+                    buf = io.BytesIO()
+                    if pages:
+                        pages[0].save(
+                            buf, format="PDF", save_all=True,
+                            append_images=pages[1:], resolution=150,
+                        )
+                    buf.seek(0)
+                    pdf_bytes = buf.read()
 
                 st.download_button(
-                    label=f"📥 통합 PDF ({result['count']}명, {len(pdf_bytes)//1024}KB)",
+                    label=f"📥 통합 PDF ({n}명, {len(pdf_bytes)//1024}KB)",
                     data=pdf_bytes,
                     file_name="immigration_forms.pdf",
                     mime="application/pdf",
                 )
 
         with col_b:
-            if st.button("📦 개인별 ZIP 생성"):
+            if st.button("📦 개인별 ZIP"):
                 zip_buf = io.BytesIO()
                 with st.spinner("생성 중..."):
+                    cus_positions = _get_positions("customs_declaration")
+                    cus_tmp = _write_jpg_to_tmp(st.session_state.cus_jpg_bytes) if st.session_state.cus_jpg_bytes else None
+
                     with zipfile.ZipFile(zip_buf, "w") as zf:
                         for p in selected_passengers:
                             name_safe = p.get("영문이름", "unknown").replace(" ", "_")
                             no = p.get("NO", "")
-                            for form_type, template, positions, suffix in [
-                                ("immigration_card", imm_tmp, imm_positions, "immigration"),
-                                ("customs_declaration", cus_tmp, cus_positions, "customs"),
-                            ]:
-                                if form_type == "immigration_card" and not include_imm:
-                                    continue
-                                if form_type == "customs_declaration" and not include_cus:
-                                    continue
-                                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as f:
-                                    fp = f.name
-                                generate_single_pdf(form_type, p, common, positions, template, fp)
-                                zf.write(fp, f"{no}_{name_safe}_{suffix}.pdf")
-                                os.unlink(fp)
+
+                            if include_imm:
+                                img = _render_imm_image(p, common).convert("RGB")
+                                buf = io.BytesIO()
+                                img.save(buf, format="PDF", resolution=150)
+                                zf.writestr(f"{no}_{name_safe}_immigration.pdf", buf.getvalue())
+
+                            if include_cus:
+                                from utils.pdf_generator import generate_preview_image
+                                img = generate_preview_image(
+                                    "customs_declaration", p, common,
+                                    cus_positions, cus_tmp, scale=1.0
+                                ).convert("RGB")
+                                buf = io.BytesIO()
+                                img.save(buf, format="PDF", resolution=150)
+                                zf.writestr(f"{no}_{name_safe}_customs.pdf", buf.getvalue())
+
+                    if cus_tmp and os.path.exists(cus_tmp):
+                        os.unlink(cus_tmp)
 
                 zip_buf.seek(0)
                 st.download_button(
@@ -899,8 +924,3 @@ elif menu == "5. 인쇄 / PDF":
                     file_name="immigration_forms_individual.zip",
                     mime="application/zip",
                 )
-
-        # 임시파일 정리
-        for tmp in [imm_tmp, cus_tmp]:
-            if tmp and os.path.exists(tmp):
-                os.unlink(tmp)
