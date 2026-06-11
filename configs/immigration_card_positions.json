@@ -1,0 +1,118 @@
+{
+  "family_name": {
+    "label": "성(Family Name)",
+    "type": "text",
+    "x": 168,
+    "y": 62,
+    "width": 175,
+    "height": 16,
+    "font_size": 9,
+    "align": "left"
+  },
+  "given_name": {
+    "label": "이름(Given Names)",
+    "type": "text",
+    "x": 365,
+    "y": 62,
+    "width": 185,
+    "height": 16,
+    "font_size": 9,
+    "align": "left"
+  },
+  "dob_split": {
+    "label": "생년월일(DDMMYYYY split)",
+    "type": "split_text",
+    "x": 108,
+    "y": 83,
+    "cell_gap": 13.5,
+    "font_size": 9
+  },
+  "country": {
+    "label": "국명(Country name)",
+    "type": "text",
+    "x": 256,
+    "y": 83,
+    "width": 110,
+    "height": 16,
+    "font_size": 8,
+    "align": "left"
+  },
+  "city": {
+    "label": "도시명(City name)",
+    "type": "text",
+    "x": 392,
+    "y": 83,
+    "width": 150,
+    "height": 16,
+    "font_size": 8,
+    "align": "left"
+  },
+  "purpose_tourism": {
+    "label": "목적: 관광(Tourism) □",
+    "type": "checkbox",
+    "x": 110,
+    "y": 108,
+    "font_size": 10
+  },
+  "purpose_business": {
+    "label": "목적: 상용(Business) □",
+    "type": "checkbox",
+    "x": 200,
+    "y": 108,
+    "font_size": 10
+  },
+  "purpose_relatives": {
+    "label": "목적: 친족방문(Visiting relatives) □",
+    "type": "checkbox",
+    "x": 292,
+    "y": 108,
+    "font_size": 10
+  },
+  "purpose_others": {
+    "label": "목적: 기타(Others) □",
+    "type": "checkbox",
+    "x": 110,
+    "y": 126,
+    "font_size": 10
+  },
+  "flight_no": {
+    "label": "항공편명(Flight No.)",
+    "type": "text",
+    "x": 402,
+    "y": 103,
+    "width": 148,
+    "height": 15,
+    "font_size": 9,
+    "align": "left"
+  },
+  "stay_duration": {
+    "label": "체류예정기간(Stay duration)",
+    "type": "text",
+    "x": 402,
+    "y": 120,
+    "width": 148,
+    "height": 15,
+    "font_size": 9,
+    "align": "left"
+  },
+  "hotel_name": {
+    "label": "호텔명(Address in Japan)",
+    "type": "text",
+    "x": 110,
+    "y": 150,
+    "width": 240,
+    "height": 14,
+    "font_size": 8,
+    "align": "left"
+  },
+  "hotel_tel": {
+    "label": "전화번호(TEL)",
+    "type": "text",
+    "x": 385,
+    "y": 150,
+    "width": 165,
+    "height": 14,
+    "font_size": 9,
+    "align": "left"
+  }
+}
