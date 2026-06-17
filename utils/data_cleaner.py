@@ -12,6 +12,10 @@ def normalize_name(name: str) -> str:
 
     name = name.strip().upper()
 
+    # 하이픈을 슬래시처럼 처리 (KIM-GILDONG → KIM/GILDONG)
+    if "-" in name and "/" not in name:
+        name = name.replace("-", "/", 1)
+
     if "/" in name:
         parts = name.split("/", 1)
         family = parts[0].strip()
@@ -78,9 +82,9 @@ def normalize_gender(gender) -> str:
 
     g = str(gender).strip().upper()
 
-    if g in ["M", "남", "MR", "1", "3", "MALE"]:
+    if g in ["M", "남", "남자", "MR", "1", "3", "MALE"]:
         return "M"
-    if g in ["F", "여", "MS", "2", "4", "FEMALE"]:
+    if g in ["F", "여", "여자", "MS", "2", "4", "FEMALE"]:
         return "F"
 
     if g and g[0] in ["M", "1", "3"]:
