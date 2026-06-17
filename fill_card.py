@@ -69,61 +69,54 @@ FIELDS: dict[str, dict] = {
     # x=164 label end | x=637 family/given divider | x=1256 card right
     "family_name": {
         "x": 168, "y": 49, "w": 468, "h": 64,
-        "align": "left", "font_size": 28, "auto_shrink": True,
+        "align": "left", "font_size": 72, "auto_shrink": True,
     },
     "given_names": {
         "x": 641, "y": 49, "w": 614, "h": 64,
-        "align": "left", "font_size": 28, "auto_shrink": True,
+        "align": "left", "font_size": 72, "auto_shrink": True,
     },
 
     # ── 生年月日/DOB row  (y=113-175) ─────────────────────────
-    # DOB area x=164-479 (315px): Day 25% | Month 25% | Year 50%
-    # Country/City area x=637-1256 (619px): Country ~40% | City ~60%
     "dob_day": {
         "x": 168, "y": 113, "w": 76, "h": 62,
-        "align": "center", "font_size": 26, "auto_shrink": False,
+        "align": "center", "font_size": 72, "auto_shrink": True,
     },
     "dob_month": {
         "x": 249, "y": 113, "w": 76, "h": 62,
-        "align": "center", "font_size": 26, "auto_shrink": False,
+        "align": "center", "font_size": 72, "auto_shrink": True,
     },
     "dob_year": {
         "x": 329, "y": 113, "w": 148, "h": 62,
-        "align": "center", "font_size": 26, "auto_shrink": False,
+        "align": "center", "font_size": 72, "auto_shrink": True,
         "letter_spacing": 2,
     },
     "country": {
         "x": 641, "y": 113, "w": 254, "h": 62,
-        "align": "left", "font_size": 24, "auto_shrink": True,
+        "align": "left", "font_size": 72, "auto_shrink": True,
     },
     "city": {
         "x": 898, "y": 113, "w": 357, "h": 62,
-        "align": "left", "font_size": 24, "auto_shrink": True,
+        "align": "left", "font_size": 72, "auto_shrink": True,
     },
 
     # ── 渡航目的/Purpose rows  (y=175-286) ────────────────────
-    # Right section cols: [735, 806, 932, 1256]
-    # Flight No label: 735-932 | Flight No input: 932-1256
-    # Sub-row 1: y=175-231  Sub-row 2: y=231-286
     "flight_no": {
         "x": 935, "y": 175, "w": 320, "h": 56,
-        "align": "center", "font_size": 26, "auto_shrink": True,
+        "align": "center", "font_size": 72, "auto_shrink": True,
     },
     "stay_duration": {
         "x": 935, "y": 231, "w": 320, "h": 55,
-        "align": "center", "font_size": 24, "auto_shrink": True,
+        "align": "center", "font_size": 72, "auto_shrink": True,
     },
 
     # ── 日本の連絡先/Address row  (y=286-416) ─────────────────
-    # Left (hotel): y=289-355 clean white input (center y=322)
-    # Right (TEL): label at y=298-313, input area y=316-355 (center y=336)
     "hotel_name": {
         "x": 168, "y": 290, "w": 680, "h": 65,
-        "align": "left", "font_size": 24, "auto_shrink": True,
+        "align": "left", "font_size": 72, "auto_shrink": True,
     },
     "hotel_tel": {
         "x": 855, "y": 316, "w": 399, "h": 40,
-        "align": "left", "font_size": 24, "auto_shrink": True,
+        "align": "left", "font_size": 72, "auto_shrink": True,
     },
 }
 
@@ -268,11 +261,13 @@ def _draw_text_in_cell(
     if not text:
         return
 
-    # 1) 폰트 결정
+    # 1) 폰트 결정 — 셀 높이의 88% 이하로 클램핑 후 너비 auto_shrink
+    max_by_height = int(h * 0.88)
+    effective_size = min(font_size, max_by_height)
     if auto_shrink:
-        font = _fit_font(draw, text, w, font_size)
+        font = _fit_font(draw, text, w, effective_size)
     else:
-        font = _load_font(font_size)
+        font = _load_font(effective_size)
 
     # 2) 텍스트 크기 측정
     tw, th = _measure_text(draw, text, font)
@@ -302,7 +297,7 @@ def _draw_text_in_cell(
 def _draw_check(
     draw: ImageDraw.ImageDraw,
     cx: int, cy: int,
-    size: int = 30,
+    size: int = 52,
     symbol: str = "✓",
 ) -> None:
     """
@@ -328,6 +323,7 @@ def fill_card(
     data: dict,
     output_path: str | Path,
     whiten: bool = True,
+    print_mode: bool = False,
 ) -> Image.Image:
     """
     출입국카드 템플릿에 data를 오버레이하여 output_path에 저장.
@@ -338,19 +334,23 @@ def fill_card(
     data          : SAMPLE_DATA 형식의 딕셔너리
     output_path   : 저장 경로 (.png 권장)
     whiten        : True → 밝은 배경 픽셀을 순백(255)으로 처리 (잉크 절약)
+    print_mode    : True → 흰 배경만 사용 (카드 양식 미출력). 미리보기는 False.
     """
     # ── 1. 이미지 로드 & 정규화 ────────────────────────────────
-    img = Image.open(template_path).convert("RGB")
-    img = normalize_image(img)
+    if print_mode:
+        img = Image.new("RGB", (CANVAS_W, CANVAS_H), (255, 255, 255))
+    else:
+        img = Image.open(template_path).convert("RGB")
+        img = normalize_image(img)
 
-    # ── 2. 배경 흰색 처리 (선택) ───────────────────────────────
-    if whiten:
-        import numpy as np
-        arr = np.array(img)
-        gray = np.mean(arr, axis=2)
-        mask = gray > 200                   # 밝은 픽셀
-        arr[mask] = [255, 255, 255]
-        img = Image.fromarray(arr.astype("uint8"))
+        # ── 2. 배경 흰색 처리 (선택) ───────────────────────────────
+        if whiten:
+            import numpy as np
+            arr = np.array(img)
+            gray = np.mean(arr, axis=2)
+            mask = gray > 200                   # 밝은 픽셀
+            arr[mask] = [255, 255, 255]
+            img = Image.fromarray(arr.astype("uint8"))
 
     draw = ImageDraw.Draw(img)
 
