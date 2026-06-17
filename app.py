@@ -207,7 +207,7 @@ def _build_print_html(images_b64: list[str], title: str = "") -> str:
 # ══════════════════════════════════════════════════════════════
 # fill_card 렌더러
 # ══════════════════════════════════════════════════════════════
-def _render_imm_image(passenger: dict, common: dict):
+def _render_imm_image(passenger: dict, common: dict, print_mode: bool = False):
     from PIL import Image as _PILImage
     data = passenger_to_card_data(passenger, common)
     jpg_bytes = st.session_state.imm_jpg_bytes
@@ -218,7 +218,7 @@ def _render_imm_image(passenger: dict, common: dict):
     tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
     tmp_out.close()
     try:
-        fill_card(tmp_in.name, data, tmp_out.name)
+        fill_card(tmp_in.name, data, tmp_out.name, print_mode=print_mode)
     finally:
         os.unlink(tmp_in.name)
     img = _PILImage.open(tmp_out.name).copy()
@@ -525,7 +525,7 @@ elif menu == "3. 출력":
 
             for p in selected_passengers:
                 if include_imm:
-                    img = _render_imm_image(p, common)
+                    img = _render_imm_image(p, common, print_mode=True)
                     images_b64.append(_img_to_base64(img))
                 if include_cus:
                     img = generate_preview_image(
@@ -564,7 +564,7 @@ elif menu == "3. 출력":
 
                 for p in selected_passengers:
                     if include_imm:
-                        pages.append(_render_imm_image(p, common).convert("RGB"))
+                        pages.append(_render_imm_image(p, common, print_mode=True).convert("RGB"))
                     if include_cus:
                         img = generate_preview_image(
                             "customs_declaration", p, common, cus_positions, cus_tmp, scale=1.0
@@ -601,7 +601,7 @@ elif menu == "3. 출력":
                         no = p.get("NO", "")
 
                         if include_imm:
-                            img = _render_imm_image(p, common).convert("RGB")
+                            img = _render_imm_image(p, common, print_mode=True).convert("RGB")
                             buf = io.BytesIO()
                             img.save(buf, format="PDF", resolution=200)
                             zf.writestr(f"{no}_{name_safe}_immigration.pdf", buf.getvalue())
