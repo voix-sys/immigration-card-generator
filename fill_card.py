@@ -68,11 +68,11 @@ FIELDS: dict[str, dict] = {
     # ── 氏名/Name row  (y=49-113) ─────────────────────────────
     # x=164 label end | x=637 family/given divider | x=1256 card right
     "family_name": {
-        "x": 167, "y": 49, "w": 468, "h": 64,
+        "x": 168, "y": 49, "w": 468, "h": 64,
         "align": "left", "font_size": 28, "auto_shrink": True,
     },
     "given_names": {
-        "x": 640, "y": 49, "w": 614, "h": 64,
+        "x": 641, "y": 49, "w": 614, "h": 64,
         "align": "left", "font_size": 28, "auto_shrink": True,
     },
 
@@ -80,24 +80,24 @@ FIELDS: dict[str, dict] = {
     # DOB area x=164-479 (315px): Day 25% | Month 25% | Year 50%
     # Country/City area x=637-1256 (619px): Country ~40% | City ~60%
     "dob_day": {
-        "x": 167, "y": 113, "w": 76, "h": 62,
+        "x": 168, "y": 113, "w": 76, "h": 62,
         "align": "center", "font_size": 26, "auto_shrink": False,
     },
     "dob_month": {
-        "x": 248, "y": 113, "w": 76, "h": 62,
+        "x": 249, "y": 113, "w": 76, "h": 62,
         "align": "center", "font_size": 26, "auto_shrink": False,
     },
     "dob_year": {
-        "x": 328, "y": 113, "w": 148, "h": 62,
+        "x": 329, "y": 113, "w": 148, "h": 62,
         "align": "center", "font_size": 26, "auto_shrink": False,
         "letter_spacing": 2,
     },
     "country": {
-        "x": 640, "y": 113, "w": 254, "h": 62,
+        "x": 641, "y": 113, "w": 254, "h": 62,
         "align": "left", "font_size": 24, "auto_shrink": True,
     },
     "city": {
-        "x": 897, "y": 113, "w": 357, "h": 62,
+        "x": 898, "y": 113, "w": 357, "h": 62,
         "align": "left", "font_size": 24, "auto_shrink": True,
     },
 
@@ -106,23 +106,23 @@ FIELDS: dict[str, dict] = {
     # Flight No label: 735-932 | Flight No input: 932-1256
     # Sub-row 1: y=175-231  Sub-row 2: y=231-286
     "flight_no": {
-        "x": 934, "y": 175, "w": 320, "h": 56,
+        "x": 935, "y": 175, "w": 320, "h": 56,
         "align": "center", "font_size": 26, "auto_shrink": True,
     },
     "stay_duration": {
-        "x": 934, "y": 231, "w": 320, "h": 55,
+        "x": 935, "y": 231, "w": 320, "h": 55,
         "align": "center", "font_size": 24, "auto_shrink": True,
     },
 
     # ── 日本の連絡先/Address row  (y=286-416) ─────────────────
-    # TEL divider detected at x≈850 (15% threshold)
-    # Hotel name: x=164-850  |  TEL: x=850-1256
+    # Left (hotel): y=289-355 clean white input (center y=322)
+    # Right (TEL): label at y=298-313, input area y=316-355 (center y=336)
     "hotel_name": {
-        "x": 167, "y": 286, "w": 680, "h": 130,
+        "x": 168, "y": 290, "w": 680, "h": 65,
         "align": "left", "font_size": 24, "auto_shrink": True,
     },
     "hotel_tel": {
-        "x": 854, "y": 340, "w": 400, "h": 76,
+        "x": 855, "y": 316, "w": 399, "h": 40,
         "align": "left", "font_size": 24, "auto_shrink": True,
     },
 }
