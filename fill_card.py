@@ -69,54 +69,54 @@ FIELDS: dict[str, dict] = {
     # x=164 label end | x=637 family/given divider | x=1256 card right
     "family_name": {
         "x": 168, "y": 49, "w": 468, "h": 64,
-        "align": "left", "font_size": 72, "auto_shrink": True,
+        "align": "left", "font_size": 44, "auto_shrink": True,
     },
     "given_names": {
         "x": 641, "y": 49, "w": 614, "h": 64,
-        "align": "left", "font_size": 72, "auto_shrink": True,
+        "align": "left", "font_size": 44, "auto_shrink": True,
     },
 
     # ── 生年月日/DOB row  (y=113-175) ─────────────────────────
     "dob_day": {
         "x": 168, "y": 113, "w": 76, "h": 62,
-        "align": "center", "font_size": 72, "auto_shrink": True,
+        "align": "center", "font_size": 44, "auto_shrink": True,
     },
     "dob_month": {
         "x": 249, "y": 113, "w": 76, "h": 62,
-        "align": "center", "font_size": 72, "auto_shrink": True,
+        "align": "center", "font_size": 44, "auto_shrink": True,
     },
     "dob_year": {
         "x": 329, "y": 113, "w": 148, "h": 62,
-        "align": "center", "font_size": 72, "auto_shrink": True,
+        "align": "center", "font_size": 44, "auto_shrink": True,
         "letter_spacing": 2,
     },
     "country": {
         "x": 641, "y": 113, "w": 254, "h": 62,
-        "align": "left", "font_size": 72, "auto_shrink": True,
+        "align": "left", "font_size": 44, "auto_shrink": True,
     },
     "city": {
         "x": 898, "y": 113, "w": 357, "h": 62,
-        "align": "left", "font_size": 72, "auto_shrink": True,
+        "align": "left", "font_size": 44, "auto_shrink": True,
     },
 
     # ── 渡航目的/Purpose rows  (y=175-286) ────────────────────
     "flight_no": {
         "x": 935, "y": 175, "w": 320, "h": 56,
-        "align": "center", "font_size": 72, "auto_shrink": True,
+        "align": "center", "font_size": 44, "auto_shrink": True,
     },
     "stay_duration": {
         "x": 935, "y": 231, "w": 320, "h": 55,
-        "align": "center", "font_size": 72, "auto_shrink": True,
+        "align": "center", "font_size": 44, "auto_shrink": True,
     },
 
     # ── 日本の連絡先/Address row  (y=286-416) ─────────────────
     "hotel_name": {
         "x": 168, "y": 290, "w": 680, "h": 65,
-        "align": "left", "font_size": 72, "auto_shrink": True,
+        "align": "left", "font_size": 44, "auto_shrink": True,
     },
     "hotel_tel": {
         "x": 855, "y": 316, "w": 399, "h": 40,
-        "align": "left", "font_size": 72, "auto_shrink": True,
+        "align": "left", "font_size": 44, "auto_shrink": True,
     },
 }
 
@@ -384,17 +384,12 @@ def fill_card(
     _draw_text_in_cell(draw, data.get("stay_duration", ""),
                        **FIELDS["stay_duration"])
 
-    # ── 5. 입국 목적 체크박스 ──────────────────────────────────
+    # ── 5. 입국 목적 체크박스 (V 표시, 하단 Q 체크 없음) ─────────
     purpose = data.get("purpose", "tourism").lower()
     if purpose in ("tourism", "관광"):
-        _draw_check(draw, *CHECKBOXES["tourism"])
+        _draw_check(draw, *CHECKBOXES["tourism"], symbol="V")
     elif purpose in ("business", "상용"):
-        _draw_check(draw, *CHECKBOXES["business"])
-    # relatives / others 체크박스가 필요하면 CHECKBOXES 딕셔너리에 추가
-
-    # ── 6. 하단 질문 No 체크 (3개 고정) ───────────────────────
-    for key in ("no_q1", "no_q2", "no_q3"):
-        _draw_check(draw, *CHECKBOXES[key])
+        _draw_check(draw, *CHECKBOXES["business"], symbol="V")
 
     # ── 7. 저장 ────────────────────────────────────────────────
     img.save(str(output_path), format="PNG", optimize=False)
