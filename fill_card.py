@@ -150,18 +150,20 @@ def _load_font(size: int) -> ImageFont.FreeTypeFont:
     Linux  : Noto Sans → DejaVu
     """
     candidates = [
+        # Linux / Streamlit Cloud (우선순위 상위)
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSansJP-Regular.ttf",
         # Windows
+        r"C:\Windows\Fonts\arial.ttf",
         r"C:\Windows\Fonts\NotoSansJP-Regular.ttf",
         r"C:\Windows\Fonts\NotoSans-Regular.ttf",
         r"C:\Windows\Fonts\msgothic.ttc",
         r"C:\Windows\Fonts\meiryo.ttc",
         r"C:\Windows\Fonts\YuGothR.ttc",
-        r"C:\Windows\Fonts\arial.ttf",
-        # Linux / Streamlit Cloud
-        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
-        "/usr/share/fonts/truetype/noto/NotoSansJP-Regular.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
     ]
     for path in candidates:
         if os.path.exists(path):
@@ -169,7 +171,8 @@ def _load_font(size: int) -> ImageFont.FreeTypeFont:
                 return ImageFont.truetype(path, size)
             except Exception:
                 continue
-    # 최후 수단: PIL 기본 폰트 (크기 고정)
+    # 최후 수단: PIL 기본 폰트 (크기 고정 — 폰트 미설치 환경)
+    print(f"[경고] 폰트를 찾을 수 없음. packages.txt에 fonts-liberation 확인 필요.")
     return ImageFont.load_default()
 
 
