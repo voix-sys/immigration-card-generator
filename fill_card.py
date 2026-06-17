@@ -3,7 +3,7 @@ fill_card.py
 ============
 일본 외국인입국기록(출입국카드) 자동 텍스트 오버레이 유틸리티
 
-기준 해상도 : 1494 × 2012 px
+기준 해상도 : 1654 × 2337 px  (A4 200 DPI — 실제 템플릿 크기)
 좌표계      : 좌상단 원점, x→ 오른쪽, y↓ 아래
 텍스트 색상 : 거의 검정 (15, 15, 60) — 진한 네이비
 
@@ -21,9 +21,9 @@ from typing import Optional
 
 from PIL import Image, ImageDraw, ImageFont
 
-# ── 기준 해상도 ────────────────────────────────────────────────
-CANVAS_W = 1494
-CANVAS_H = 2012
+# ── 기준 해상도 (A4 200 DPI = 실제 템플릿 크기) ──────────────
+CANVAS_W = 1654
+CANVAS_H = 2337
 
 # ── 텍스트 색상 ────────────────────────────────────────────────
 INK = (15, 15, 60)          # 진한 네이비 (인감·관공서 느낌)
@@ -65,66 +65,66 @@ SAMPLE_DATA: dict = {
 FIELDS: dict[str, dict] = {
 
     # ── 인적 사항 ─────────────────────────────────────────────
+    # 원본 좌표(1494×2012 기준)를 A4 200DPI(1654×2337)로 스케일: sx=1.107, sy=1.162
     "family_name": {
-        "x": 160, "y": 110, "w": 420, "h": 55,
-        "align": "left", "font_size": 28, "auto_shrink": True,
+        "x": 177, "y": 128, "w": 465, "h": 64,
+        "align": "left", "font_size": 31, "auto_shrink": True,
     },
     "given_names": {
-        "x": 595, "y": 110, "w": 530, "h": 55,
-        "align": "left", "font_size": 28, "auto_shrink": True,
+        "x": 659, "y": 128, "w": 587, "h": 64,
+        "align": "left", "font_size": 31, "auto_shrink": True,
     },
 
-    # 생년월일 — Y축 공통 190
+    # 생년월일
     "dob_day": {
-        "x": 160, "y": 190, "w": 60,  "h": 50,
-        "align": "center", "font_size": 26, "auto_shrink": False,
+        "x": 177, "y": 221, "w": 66,  "h": 58,
+        "align": "center", "font_size": 30, "auto_shrink": False,
     },
     "dob_month": {
-        "x": 235, "y": 190, "w": 60,  "h": 50,
-        "align": "center", "font_size": 26, "auto_shrink": False,
+        "x": 260, "y": 221, "w": 66,  "h": 58,
+        "align": "center", "font_size": 30, "auto_shrink": False,
     },
     "dob_year": {
-        "x": 335, "y": 190, "w": 110, "h": 50,
-        "align": "center", "font_size": 26, "auto_shrink": False,
-        "letter_spacing": 4,   # px 단위 자간 (4자리 연도용)
+        "x": 371, "y": 221, "w": 122, "h": 58,
+        "align": "center", "font_size": 30, "auto_shrink": False,
+        "letter_spacing": 4,
     },
 
     # ── 주소 / 편명 ───────────────────────────────────────────
     "country": {
-        "x": 595, "y": 190, "w": 320, "h": 50,
-        "align": "left", "font_size": 26, "auto_shrink": True,
+        "x": 659, "y": 221, "w": 354, "h": 58,
+        "align": "left", "font_size": 30, "auto_shrink": True,
     },
     "city": {
-        "x": 925, "y": 190, "w": 200, "h": 50,
-        "align": "left", "font_size": 26, "auto_shrink": True,
+        "x": 1025, "y": 221, "w": 222, "h": 58,
+        "align": "left", "font_size": 30, "auto_shrink": True,
     },
     "flight_no": {
-        "x": 860, "y": 270, "w": 260, "h": 60,
-        "align": "center", "font_size": 28, "auto_shrink": True,
+        "x": 952, "y": 314, "w": 288, "h": 70,
+        "align": "center", "font_size": 31, "auto_shrink": True,
     },
     "hotel_name": {
-        "x": 160, "y": 353, "w": 680, "h": 55,
-        "align": "left", "font_size": 26, "auto_shrink": True,  # ★ Auto-shrink
+        "x": 177, "y": 410, "w": 753, "h": 64,
+        "align": "left", "font_size": 30, "auto_shrink": True,
     },
     "hotel_tel": {
-        "x": 850, "y": 353, "w": 270, "h": 55,
-        "align": "left", "font_size": 26, "auto_shrink": True,
+        "x": 941, "y": 410, "w": 299, "h": 64,
+        "align": "left", "font_size": 30, "auto_shrink": True,
     },
-    # 체류예정기간 — 항공편명 바로 아래 행 (사용자가 좌표 미지정: 추정값)
     "stay_duration": {
-        "x": 860, "y": 335, "w": 260, "h": 50,
-        "align": "center", "font_size": 24, "auto_shrink": True,
+        "x": 952, "y": 389, "w": 288, "h": 58,
+        "align": "center", "font_size": 28, "auto_shrink": True,
     },
 }
 
 # 체크박스: (x, y) = 체크 기호를 배치할 칸의 정중앙
 CHECKBOXES: dict[str, tuple[int, int]] = {
-    "tourism":  (138, 286),
-    "business": (288, 286),
+    "tourism":  (153, 332),
+    "business": (319, 332),
     # 하단 질문 No 체크 — 3개 고정
-    "no_q1": (932, 604),
-    "no_q2": (932, 654),
-    "no_q3": (932, 712),
+    "no_q1": (1032, 701),
+    "no_q2": (1032, 760),
+    "no_q3": (1032, 827),
 }
 
 # ══════════════════════════════════════════════════════════════
@@ -376,7 +376,7 @@ def fill_card(
 
     # ── 7. 저장 ────────────────────────────────────────────────
     img.save(str(output_path), format="PNG", optimize=False)
-    print(f"[fill_card] 저장 완료: {output_path}  ({CANVAS_W}×{CANVAS_H}px)")
+    print(f"[fill_card] saved: {output_path}  ({CANVAS_W}×{CANVAS_H}px = A4 200DPI)")
     return img
 
 

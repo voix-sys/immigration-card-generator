@@ -16,10 +16,8 @@ import streamlit.components.v1 as components
 
 from utils.data_cleaner import clean_passenger
 from utils.validator import validate_all, validate_passenger
-from utils.position_manager import (
-    load_positions, save_positions, init_default_configs,
-)
-from utils.pdf_generator import generate_combined_pdf
+from utils.position_manager import load_positions, init_default_configs
+from utils.pdf_generator import generate_preview_image
 from fill_card import fill_card, passenger_to_card_data
 
 # ── 초기화 ─────────────────────────────────────────────────────
@@ -33,118 +31,38 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-  /* ── 전체 배경 ── */
-  .stApp,
-  [data-testid="stAppViewContainer"],
-  [data-testid="stMain"],
-  [data-testid="block-container"],
-  section[data-testid="stMainBlockContainer"],
-  .main, .block-container { background-color: #ffffff !important; }
-
-  /* ── 사이드바 ── */
-  [data-testid="stSidebar"],
-  [data-testid="stSidebar"] > div { background-color: #f0f0f0 !important; }
-
-  /* ── 모든 텍스트 검정 ── */
-  *, *::before, *::after { color: #111111 !important; }
-
-  /* ── 입력창 ── */
-  input, textarea,
-  [data-baseweb="input"] input,
-  [data-baseweb="textarea"] textarea {
-      background-color: #ffffff !important;
-      color: #111111 !important;
-      border-color: #aaaaaa !important;
-  }
-
-  /* ── selectbox 드롭다운 ── */
-  [data-baseweb="select"] > div,
-  [data-baseweb="select"] span,
-  [data-baseweb="popover"] li,
-  [data-baseweb="menu"] ul,
-  [role="listbox"],
-  [role="option"] {
-      background-color: #ffffff !important;
-      color: #111111 !important;
-  }
-  [role="option"]:hover { background-color: #e8eaf6 !important; }
-
-  /* ── number_input 버튼 포함 ── */
-  [data-testid="stNumberInput"] > div,
-  [data-testid="stNumberInput"] button {
-      background-color: #ffffff !important;
-      color: #111111 !important;
-      border-color: #aaaaaa !important;
-  }
-
-  /* ── radio / checkbox ── */
-  [data-testid="stRadio"] > div,
-  [data-testid="stCheckbox"] > div { background-color: transparent !important; }
-
-  /* ── metric 카드 ── */
-  [data-testid="metric-container"],
-  [data-testid="stMetric"],
-  [data-testid="stMetricValue"],
-  [data-testid="stMetricLabel"] {
-      background-color: #f5f7ff !important;
-      color: #111111 !important;
-  }
-
-  /* ── expander ── */
-  [data-testid="stExpander"],
-  [data-testid="stExpander"] > div,
-  details, summary {
-      background-color: #f9f9f9 !important;
-      color: #111111 !important;
-      border-color: #cccccc !important;
-  }
-
-  /* ── info / success / warning / error 박스 ── */
-  [data-testid="stAlert"],
-  [data-testid="stAlert"] > div,
-  [data-testid="stAlert"] p { color: #111111 !important; }
-
-  /* ── JSON 표시 ── */
-  [data-testid="stJson"],
-  .stJson { background-color: #f5f5f5 !important; color: #111111 !important; }
-
-  /* ── 데이터프레임 / 테이블 ── */
-  [data-testid="stDataFrame"],
-  .dvn-scroller, .glideDataEditor,
-  .stDataFrame { background-color: #ffffff !important; }
-
-  /* ── 탭 ── */
-  [data-testid="stTabs"] [role="tablist"],
-  [data-testid="stTabs"] [role="tab"] {
-      background-color: #f0f0f0 !important;
-      color: #111111 !important;
-  }
-  [data-testid="stTabs"] [role="tab"][aria-selected="true"] {
-      background-color: #ffffff !important;
-      border-bottom: 2px solid #1a56db !important;
-  }
-
-  /* ── divider ── */
-  hr { border-color: #cccccc !important; }
-
-  /* ── 버튼 ── */
-  [data-testid="stButton"] > button,
-  .stButton > button {
-      background-color: #1a56db !important;
-      color: #ffffff !important;
-      border: none !important;
-  }
-  [data-testid="stButton"] > button:hover,
-  .stButton > button:hover { background-color: #1245b5 !important; }
-
-  /* ── 다운로드 버튼 ── */
-  [data-testid="stDownloadButton"] > button {
-      background-color: #0e7c3a !important;
-      color: #ffffff !important;
-  }
-
-  /* ── code 블록 ── */
-  code, pre { background-color: #f3f3f3 !important; color: #333333 !important; }
+  .stApp,[data-testid="stAppViewContainer"],[data-testid="stMain"],
+  [data-testid="block-container"],section[data-testid="stMainBlockContainer"],
+  .main,.block-container{background-color:#ffffff!important}
+  [data-testid="stSidebar"],[data-testid="stSidebar"]>div{background-color:#f0f0f0!important}
+  *,*::before,*::after{color:#111111!important}
+  input,textarea,[data-baseweb="input"] input,[data-baseweb="textarea"] textarea{
+    background-color:#ffffff!important;color:#111111!important;border-color:#aaaaaa!important}
+  [data-baseweb="select"]>div,[data-baseweb="select"] span,[data-baseweb="popover"] li,
+  [data-baseweb="menu"] ul,[role="listbox"],[role="option"]{
+    background-color:#ffffff!important;color:#111111!important}
+  [role="option"]:hover{background-color:#e8eaf6!important}
+  [data-testid="stNumberInput"]>div,[data-testid="stNumberInput"] button{
+    background-color:#ffffff!important;color:#111111!important;border-color:#aaaaaa!important}
+  [data-testid="stRadio"]>div,[data-testid="stCheckbox"]>div{background-color:transparent!important}
+  [data-testid="metric-container"],[data-testid="stMetric"],
+  [data-testid="stMetricValue"],[data-testid="stMetricLabel"]{
+    background-color:#f5f7ff!important;color:#111111!important}
+  [data-testid="stExpander"],[data-testid="stExpander"]>div,details,summary{
+    background-color:#f9f9f9!important;color:#111111!important;border-color:#cccccc!important}
+  [data-testid="stAlert"],[data-testid="stAlert"]>div,[data-testid="stAlert"] p{color:#111111!important}
+  [data-testid="stJson"],.stJson{background-color:#f5f5f5!important;color:#111111!important}
+  [data-testid="stDataFrame"],.dvn-scroller,.glideDataEditor,.stDataFrame{background-color:#ffffff!important}
+  [data-testid="stTabs"] [role="tablist"],[data-testid="stTabs"] [role="tab"]{
+    background-color:#f0f0f0!important;color:#111111!important}
+  [data-testid="stTabs"] [role="tab"][aria-selected="true"]{
+    background-color:#ffffff!important;border-bottom:2px solid #1a56db!important}
+  hr{border-color:#cccccc!important}
+  [data-testid="stButton"]>button,.stButton>button{
+    background-color:#1a56db!important;color:#ffffff!important;border:none!important}
+  [data-testid="stButton"]>button:hover,.stButton>button:hover{background-color:#1245b5!important}
+  [data-testid="stDownloadButton"]>button{background-color:#0e7c3a!important;color:#ffffff!important}
+  code,pre{background-color:#f3f3f3!important;color:#333333!important}
 </style>
 """, unsafe_allow_html=True)
 
@@ -161,9 +79,9 @@ def _init_state():
     defaults = {
         "common_info": {
             "국적": "KOREA",
-            "도시": "",
+            "도시": "BUSAN",
             "입국편명": "",
-            "여행기간": "7 DAYS",
+            "여행기간": "3 DAYS",
             "입국일": str(date.today()),
             "호텔이름": "",
             "호텔전화번호": "",
@@ -173,8 +91,6 @@ def _init_state():
         "cleaned_passengers": [],
         "imm_jpg_bytes": None,
         "cus_jpg_bytes": None,
-        "imm_positions": None,
-        "cus_positions": None,
         "hotel_presets": HOTEL_PRESETS,
     }
     for k, v in defaults.items():
@@ -182,19 +98,6 @@ def _init_state():
             st.session_state[k] = v
 
 _init_state()
-
-
-def _get_positions(form_type: str) -> dict:
-    key = "imm_positions" if form_type == "immigration_card" else "cus_positions"
-    if st.session_state[key] is None:
-        st.session_state[key] = load_positions(form_type)
-    return st.session_state[key]
-
-
-def _save_session_positions(form_type: str, positions: dict):
-    key = "imm_positions" if form_type == "immigration_card" else "cus_positions"
-    st.session_state[key] = positions
-    save_positions(form_type, positions)
 
 
 def _write_jpg_to_tmp(jpg_bytes: bytes, suffix: str = ".jpg") -> str:
@@ -211,139 +114,49 @@ def _img_to_base64(img) -> str:
 
 
 def _build_print_html(images_b64: list[str], title: str = "") -> str:
-    """인쇄용 HTML 생성 — 각 이미지를 A4 한 페이지씩"""
     imgs_html = "".join(
         f'<div class="page"><img src="data:image/jpeg;base64,{b64}" /></div>'
         for b64 in images_b64
     )
-    return f"""
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>{title}</title>
+    return f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>{title}</title>
 <style>
-  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-  body {{ background: #f0f0f0; font-family: sans-serif; }}
-  .toolbar {{
-    position: fixed; top: 0; left: 0; right: 0;
-    background: #1f4e79; color: white;
-    padding: 10px 20px; display: flex;
-    align-items: center; gap: 12px;
-    z-index: 999; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  *{{margin:0;padding:0;box-sizing:border-box}}
+  body{{background:#f0f0f0;font-family:sans-serif}}
+  .toolbar{{position:fixed;top:0;left:0;right:0;background:#1f4e79;color:white;
+    padding:10px 20px;display:flex;align-items:center;gap:12px;z-index:999;
+    box-shadow:0 2px 8px rgba(0,0,0,.3)}}
+  .toolbar h3{{margin:0;font-size:15px;flex:1}}
+  .btn{{background:white;color:#1f4e79;border:none;padding:8px 20px;
+    border-radius:5px;font-size:14px;font-weight:bold;cursor:pointer}}
+  .btn:hover{{background:#e8f0fe}}
+  .content{{padding-top:55px}}
+  .page{{width:210mm;margin:12px auto;background:white;box-shadow:0 2px 8px rgba(0,0,0,.2)}}
+  .page img{{width:100%;display:block}}
+  @media print{{
+    body{{background:white}}.toolbar{{display:none}}.content{{padding-top:0}}
+    .page{{width:100%;margin:0;box-shadow:none;page-break-after:always}}
+    .page:last-child{{page-break-after:avoid}}
   }}
-  .toolbar h3 {{ margin: 0; font-size: 15px; flex: 1; }}
-  .btn {{
-    background: white; color: #1f4e79;
-    border: none; padding: 8px 20px;
-    border-radius: 5px; font-size: 14px;
-    font-weight: bold; cursor: pointer;
-  }}
-  .btn:hover {{ background: #e8f0fe; }}
-  .content {{ padding-top: 55px; }}
-  .page {{
-    width: 210mm; margin: 12px auto;
-    background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }}
-  .page img {{ width: 100%; display: block; }}
-  @media print {{
-    body {{ background: white; }}
-    .toolbar {{ display: none; }}
-    .content {{ padding-top: 0; }}
-    .page {{
-      width: 100%; margin: 0;
-      box-shadow: none;
-      page-break-after: always;
-    }}
-    .page:last-child {{ page-break-after: avoid; }}
-  }}
-</style>
-</head>
-<body>
+</style></head><body>
 <div class="toolbar">
   <h3>✈ 일본 입국서류 — {title}</h3>
   <button class="btn" onclick="window.print()">🖨 인쇄</button>
   <button class="btn" onclick="window.close()">✕ 닫기</button>
 </div>
-<div class="content">
-{imgs_html}
-</div>
-</body>
-</html>
-"""
+<div class="content">{imgs_html}</div>
+</body></html>"""
 
 
 # ══════════════════════════════════════════════════════════════
-# 사이드바
-# ══════════════════════════════════════════════════════════════
-st.sidebar.title("✈ 일본 입국서류")
-st.sidebar.markdown("자동 출력 프로그램")
-st.sidebar.divider()
-
-menu = st.sidebar.radio(
-    "메뉴",
-    [
-        "1. 행사정보 입력",
-        "2. 명단 업로드",
-        "3. 데이터 검증",
-        "4. 미리보기",
-        "5. 인쇄 / PDF",
-    ],
-    label_visibility="collapsed",
-)
-
-# 고급설정 (양식 위치 설정) — 접힌 상태로 숨김
-with st.sidebar.expander("⚙ 고급: 양식 위치 설정", expanded=False):
-    st.caption("양식은 고정됩니다. 위치가 맞지 않을 때만 조정하세요.")
-    if st.button("양식 위치 설정 열기", key="open_pos"):
-        st.session_state["_show_pos_editor"] = True
-
-if st.session_state.cleaned_passengers:
-    st.sidebar.success(f"✅ 승객 {len(st.session_state.cleaned_passengers)}명")
-else:
-    st.sidebar.warning("⚠ 명단 없음")
-
-st.sidebar.divider()
-st.sidebar.markdown("**양식 JPG 업로드**")
-
-# 레포 내 templates/ 폴더에서 자동 로드
-_TEMPLATE_DIR = Path(__file__).parent / "templates"
-_IMM_JPG = _TEMPLATE_DIR / "immigration_card.jpg"
-_CUS_JPG = _TEMPLATE_DIR / "customs_declaration.jpg"
-
-if st.session_state.imm_jpg_bytes is None and _IMM_JPG.exists():
-    st.session_state.imm_jpg_bytes = _IMM_JPG.read_bytes()
-if st.session_state.cus_jpg_bytes is None and _CUS_JPG.exists():
-    st.session_state.cus_jpg_bytes = _CUS_JPG.read_bytes()
-
-# 상태 표시
-imm_ok = st.session_state.imm_jpg_bytes is not None
-cus_ok = st.session_state.cus_jpg_bytes is not None
-st.sidebar.markdown(f"{'✅' if imm_ok else '❌'} 출입국카드 JPG")
-st.sidebar.markdown(f"{'✅' if cus_ok else '❌'} 휴대품신고서 JPG")
-
-# 수동 교체용 (필요시)
-with st.sidebar.expander("JPG 교체 (선택사항)"):
-    imm_upload = st.file_uploader("출입국카드 교체", type=["jpg","jpeg","png"], key="upload_imm")
-    if imm_upload:
-        st.session_state.imm_jpg_bytes = imm_upload.read()
-        st.rerun()
-    cus_upload = st.file_uploader("휴대품신고서 교체", type=["jpg","jpeg","png"], key="upload_cus")
-    if cus_upload:
-        st.session_state.cus_jpg_bytes = cus_upload.read()
-        st.rerun()
-
-
-# ══════════════════════════════════════════════════════════════
-# 공통 헬퍼: fill_card로 출입국카드 PIL 이미지 생성
+# fill_card 렌더러
 # ══════════════════════════════════════════════════════════════
 def _render_imm_image(passenger: dict, common: dict):
-    """출입국카드 1장을 fill_card.py로 렌더링 → PIL Image 반환."""
     from PIL import Image as _PILImage
     data = passenger_to_card_data(passenger, common)
     jpg_bytes = st.session_state.imm_jpg_bytes
     if not jpg_bytes:
-        return _PILImage.new("RGB", (1494, 2012), (255, 255, 255))
+        return _PILImage.new("RGB", (1654, 2337), (255, 255, 255))
     tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
     tmp_in.write(jpg_bytes); tmp_in.close()
     tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
@@ -358,569 +171,409 @@ def _render_imm_image(passenger: dict, common: dict):
 
 
 # ══════════════════════════════════════════════════════════════
-# 화면 1: 행사정보 입력
+# 사이드바
 # ══════════════════════════════════════════════════════════════
-if menu == "1. 행사정보 입력":
-    st.title("행사정보 입력")
+st.sidebar.title("✈ 일본 입국서류")
+st.sidebar.markdown("자동 출력 프로그램")
+st.sidebar.divider()
+
+menu = st.sidebar.radio(
+    "메뉴",
+    ["1. 정보 & 명단", "2. 미리보기", "3. 출력"],
+    label_visibility="collapsed",
+)
+
+# 상태 표시
+n_pax = len(st.session_state.cleaned_passengers)
+if n_pax:
+    st.sidebar.success(f"✅ 승객 {n_pax}명 로드됨")
+else:
+    st.sidebar.warning("⚠ 명단 없음")
+
+# 템플릿 자동 로드
+_TEMPLATE_DIR = Path(__file__).parent / "templates"
+_IMM_JPG = _TEMPLATE_DIR / "immigration_card.jpg"
+_CUS_JPG = _TEMPLATE_DIR / "customs_declaration.jpg"
+
+if st.session_state.imm_jpg_bytes is None and _IMM_JPG.exists():
+    st.session_state.imm_jpg_bytes = _IMM_JPG.read_bytes()
+if st.session_state.cus_jpg_bytes is None and _CUS_JPG.exists():
+    st.session_state.cus_jpg_bytes = _CUS_JPG.read_bytes()
+
+imm_ok = st.session_state.imm_jpg_bytes is not None
+cus_ok = st.session_state.cus_jpg_bytes is not None
+st.sidebar.markdown(f"{'✅' if imm_ok else '❌'} 출입국카드")
+st.sidebar.markdown(f"{'✅' if cus_ok else '❌'} 휴대품신고서")
+
+with st.sidebar.expander("JPG 교체 (선택사항)"):
+    imm_upload = st.file_uploader("출입국카드 교체", type=["jpg","jpeg","png"], key="upload_imm")
+    if imm_upload:
+        st.session_state.imm_jpg_bytes = imm_upload.read()
+        st.rerun()
+    cus_upload = st.file_uploader("휴대품신고서 교체", type=["jpg","jpeg","png"], key="upload_cus")
+    if cus_upload:
+        st.session_state.cus_jpg_bytes = cus_upload.read()
+        st.rerun()
+
+
+# ══════════════════════════════════════════════════════════════
+# 화면 1: 정보 & 명단
+# ══════════════════════════════════════════════════════════════
+if menu == "1. 정보 & 명단":
+    st.title("행사 정보 & 명단")
 
     ci = st.session_state.common_info
     presets = st.session_state.hotel_presets
 
-    col1, col2 = st.columns(2)
-    with col1:
-        ci["국적"] = st.text_input("국적 (Nationality)", value=ci["국적"]).upper()
+    # ── 행사 정보 ────────────────────────────────────────────
+    with st.expander("✈ 행사 정보", expanded=True):
+        c1, c2, c3 = st.columns(3)
 
-        city_options = ["BUSAN", "DAEGU", "INCHEON", "직접입력"]
-        current_city = ci["도시"]
-        city_sel = st.selectbox(
-            "출발도시 (Departure City)",
-            city_options,
-            index=city_options.index(current_city) if current_city in city_options else len(city_options) - 1,
-        )
-        if city_sel == "직접입력":
-            ci["도시"] = st.text_input("도시 직접 입력", value=current_city if current_city not in city_options[:-1] else "").upper()
-        else:
-            ci["도시"] = city_sel
-
-        flight_options = ["BX143", "BX124", "BX148", "BX182", "TW311", "직접입력"]
-        current_flight = ci["입국편명"]
-        flight_sel = st.selectbox(
-            "입국편명 (Flight No.)",
-            flight_options,
-            index=flight_options.index(current_flight) if current_flight in flight_options else len(flight_options) - 1,
-        )
-        if flight_sel == "직접입력":
-            ci["입국편명"] = st.text_input("편명 직접 입력", value=current_flight if current_flight not in flight_options[:-1] else "").upper()
-        else:
-            ci["입국편명"] = flight_sel
-        stay_options = [f"{i} DAY{'S' if i > 1 else ''}" for i in range(1, 6)] + ["직접입력"]
-        current_stay = ci["여행기간"]
-        stay_sel = st.selectbox(
-            "체류예정기간 (Stay Duration)",
-            stay_options,
-            index=stay_options.index(current_stay) if current_stay in stay_options else len(stay_options) - 1,
-        )
-        if stay_sel == "직접입력":
-            ci["여행기간"] = st.text_input("직접 입력", value=current_stay if current_stay not in stay_options[:-1] else "")
-        else:
-            ci["여행기간"] = stay_sel
-
-        today = date.today()
-        date_options = [str(today + __import__('datetime').timedelta(days=i)) for i in range(0, 15)]
-        date_options_display = [(d, f"{d} ({['월','화','수','목','금','토','일'][date.fromisoformat(d).weekday()]})") for d in date_options]
-        current_date = ci["입국일"]
-        date_sel = st.selectbox(
-            "입국일 (Entry Date)",
-            [d for d, _ in date_options_display],
-            format_func=lambda d: next(label for dd, label in date_options_display if dd == d),
-            index=date_options.index(current_date) if current_date in date_options else 0,
-        )
-        ci["입국일"] = date_sel
-        ci["여행목적"] = st.selectbox(
-            "여행목적 (Purpose)",
-            ["관광", "상용", "친족방문", "기타"],
-            index=["관광", "상용", "친족방문", "기타"].index(ci.get("여행목적", "관광")),
-        )
-
-    with col2:
-        st.markdown("**호텔 선택**")
-
-        preset_names = [p["name"] for p in presets]
-        sel_preset = st.selectbox("저장된 호텔", preset_names)
-        sel = next(p for p in presets if p["name"] == sel_preset)
-
-        if sel["name"] != "직접입력":
-            if st.button("이 호텔 적용"):
+        with c1:
+            # 호텔 프리셋 선택 → 자동 적용
+            preset_names = [p["name"] for p in presets]
+            sel_preset = st.selectbox("호텔 프리셋", preset_names, key="preset_sel")
+            sel = next(p for p in presets if p["name"] == sel_preset)
+            if sel["name"] != "직접입력":
                 ci["호텔이름"] = sel["hotel"]
                 ci["호텔전화번호"] = sel["tel"]
-                st.rerun()
 
-        ci["호텔이름"] = st.text_input("호텔이름 (Hotel Name)", value=ci["호텔이름"]).upper()
-        ci["호텔전화번호"] = st.text_input("호텔전화번호 (Hotel TEL)", value=ci["호텔전화번호"])
+            ci["호텔이름"] = st.text_input("호텔명", value=ci["호텔이름"]).upper()
+            ci["호텔전화번호"] = st.text_input("호텔 전화", value=ci["호텔전화번호"])
 
-        st.divider()
-        st.markdown("**호텔 프리셋 추가**")
-        new_name = st.text_input("프리셋 이름", key="new_preset_name")
-        new_hotel = st.text_input("호텔명", key="new_preset_hotel")
-        new_tel = st.text_input("전화번호", key="new_preset_tel")
-        if st.button("➕ 프리셋 추가"):
-            if new_name and new_hotel:
-                presets.append({"name": new_name, "hotel": new_hotel.upper(), "tel": new_tel})
-                st.session_state.hotel_presets = presets
-                st.success(f"'{new_name}' 추가됨")
-                st.rerun()
+        with c2:
+            flight_options = ["BX143", "BX124", "BX148", "BX182", "TW311", "직접입력"]
+            cur_flight = ci["입국편명"]
+            flight_sel = st.selectbox(
+                "입국편명",
+                flight_options,
+                index=flight_options.index(cur_flight) if cur_flight in flight_options else len(flight_options)-1,
+            )
+            if flight_sel == "직접입력":
+                ci["입국편명"] = st.text_input("편명 직접입력", value=cur_flight if cur_flight not in flight_options[:-1] else "").upper()
+            else:
+                ci["입국편명"] = flight_sel
 
-        # 프리셋 삭제
-        deletable = [p["name"] for p in presets if p["name"] != "직접입력"]
-        if deletable:
-            del_target = st.selectbox("삭제할 프리셋", ["선택안함"] + deletable)
-            if del_target != "선택안함" and st.button("🗑 삭제"):
-                st.session_state.hotel_presets = [p for p in presets if p["name"] != del_target]
-                st.success(f"'{del_target}' 삭제됨")
-                st.rerun()
+            stay_options = [f"{i} DAYS" for i in range(1, 8)] + ["직접입력"]
+            cur_stay = ci["여행기간"]
+            stay_sel = st.selectbox(
+                "체류기간",
+                stay_options,
+                index=stay_options.index(cur_stay) if cur_stay in stay_options else len(stay_options)-1,
+            )
+            if stay_sel == "직접입력":
+                ci["여행기간"] = st.text_input("체류기간 직접입력", value=cur_stay if cur_stay not in stay_options[:-1] else "")
+            else:
+                ci["여행기간"] = stay_sel
 
-    if st.button("💾 저장", type="primary"):
+        with c3:
+            city_options = ["BUSAN", "DAEGU", "INCHEON", "직접입력"]
+            cur_city = ci["도시"]
+            city_sel = st.selectbox(
+                "출발도시",
+                city_options,
+                index=city_options.index(cur_city) if cur_city in city_options else len(city_options)-1,
+            )
+            if city_sel == "직접입력":
+                ci["도시"] = st.text_input("도시 직접입력", value=cur_city if cur_city not in city_options[:-1] else "").upper()
+            else:
+                ci["도시"] = city_sel
+
+            today = date.today()
+            date_options = [str(today + __import__('datetime').timedelta(days=i)) for i in range(0, 15)]
+            cur_date = ci["입국일"]
+            date_sel = st.selectbox(
+                "입국일",
+                date_options,
+                format_func=lambda d: f"{d} ({['월','화','수','목','금','토','일'][date.fromisoformat(d).weekday()]})",
+                index=date_options.index(cur_date) if cur_date in date_options else 0,
+            )
+            ci["입국일"] = date_sel
+            ci["여행목적"] = st.selectbox("여행목적", ["관광", "상용", "친족방문", "기타"],
+                                        index=["관광","상용","친족방문","기타"].index(ci.get("여행목적","관광")))
+
+        ci["국적"] = "KOREA"
         st.session_state.common_info = ci
-        st.success("저장 완료!")
 
-    st.divider()
-    st.subheader("현재 저장된 정보")
-    st.json(st.session_state.common_info)
+    # ── 명단 업로드 ──────────────────────────────────────────
+    with st.expander("👥 명단 업로드", expanded=True):
+        tab_file, tab_paste = st.tabs(["📁 파일 업로드", "📋 직접 붙여넣기"])
 
+        with tab_file:
+            col_up, col_dl = st.columns([3, 1])
+            with col_up:
+                uploaded = st.file_uploader(
+                    "엑셀(.xlsx) 또는 CSV",
+                    type=["xlsx", "csv"],
+                    label_visibility="collapsed",
+                )
+            with col_dl:
+                sample_data = {
+                    "NO": [1, 2], "영문이름": ["KIM/HYUNG KYOU", "RYU/SE YEON"],
+                    "생년월일": ["1982-11-24", "1983-10-17"],
+                    "여권번호": ["M12345678", "M98765432"], "성별": ["M", "F"],
+                }
+                buf = io.BytesIO()
+                pd.DataFrame(sample_data).to_excel(buf, index=False)
+                buf.seek(0)
+                st.download_button("📥 샘플", data=buf.read(),
+                                   file_name="sample.xlsx",
+                                   mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-# ══════════════════════════════════════════════════════════════
-# 화면 2: 명단 업로드
-# ══════════════════════════════════════════════════════════════
-elif menu == "2. 명단 업로드":
-    st.title("명단 업로드")
+            if uploaded:
+                try:
+                    if uploaded.name.endswith(".csv"):
+                        df = pd.read_csv(uploaded, dtype=str).fillna("")
+                    else:
+                        df = pd.read_excel(uploaded, dtype=str).fillna("")
+                    df.columns = [c.strip() for c in df.columns]
+                    required_cols = {"NO", "영문이름", "생년월일", "여권번호", "성별"}
+                    missing = required_cols - set(df.columns)
+                    if missing:
+                        st.error(f"필수 컬럼 없음: {missing}")
+                    else:
+                        raw = df.to_dict("records")
+                        cleaned = [clean_passenger(p) for p in raw]
+                        st.session_state.passengers = raw
+                        st.session_state.cleaned_passengers = cleaned
+                        st.success(f"✅ {len(cleaned)}명 로드 완료")
+                except Exception as e:
+                    st.error(f"파일 읽기 오류: {e}")
 
-    tab_file, tab_paste = st.tabs(["📁 파일 업로드", "📋 직접 붙여넣기"])
-
-    with tab_file:
-        uploaded = st.file_uploader(
-            "엑셀(.xlsx) 또는 CSV 파일을 업로드하세요",
-            type=["xlsx", "csv"],
-        )
-        if uploaded:
-            try:
-                if uploaded.name.endswith(".csv"):
-                    df = pd.read_csv(uploaded, dtype=str).fillna("")
-                else:
-                    df = pd.read_excel(uploaded, dtype=str).fillna("")
-
-                df.columns = [c.strip() for c in df.columns]
-                required_cols = {"NO", "영문이름", "생년월일", "여권번호", "성별"}
-                missing = required_cols - set(df.columns)
-                if missing:
-                    st.error(f"필수 컬럼 없음: {missing}")
-                else:
+        with tab_paste:
+            st.caption("헤더 포함, 탭 또는 쉼표 구분:")
+            st.code("NO\t영문이름\t생년월일\t여권번호\t성별")
+            pasted = st.text_area("붙여넣기", height=150)
+            if st.button("적용"):
+                try:
+                    sep = "\t" if "\t" in pasted else ","
+                    df = pd.read_csv(io.StringIO(pasted), sep=sep, dtype=str).fillna("")
+                    df.columns = [c.strip() for c in df.columns]
                     raw = df.to_dict("records")
                     cleaned = [clean_passenger(p) for p in raw]
                     st.session_state.passengers = raw
                     st.session_state.cleaned_passengers = cleaned
-                    st.success(f"✅ {len(cleaned)}명 로드 완료")
-            except Exception as e:
-                st.error(f"파일 읽기 오류: {e}")
+                    st.success(f"✅ {len(cleaned)}명 적용")
+                except Exception as e:
+                    st.error(f"파싱 오류: {e}")
 
-        st.divider()
-        sample_data = {
-            "NO": [1, 2, 3],
-            "영문이름": ["KIM/HYUNG KYOU", "RYU/SE YEON", "CHOI/HYUN WOO"],
-            "생년월일": ["1982-11-24", "1983-10-17", "090924-4"],
-            "여권번호": ["M12345678", "M98765432", "M55555555"],
-            "성별": ["M", "F", "여"],
-        }
-        buf = io.BytesIO()
-        pd.DataFrame(sample_data).to_excel(buf, index=False)
-        buf.seek(0)
-        st.download_button(
-            "📥 샘플 엑셀 다운로드",
-            data=buf.read(),
-            file_name="sample_passengers.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-
-    with tab_paste:
-        st.markdown("헤더 포함, 탭 또는 쉼표 구분으로 붙여넣기:")
-        st.code("NO\t영문이름\t생년월일\t여권번호\t성별\n1\tKIM/HYUNG KYOU\t1982-11-24\tM12345678\tM")
-        pasted = st.text_area("데이터 붙여넣기", height=200)
-        if st.button("붙여넣기 데이터 적용"):
-            try:
-                sep = "\t" if "\t" in pasted else ","
-                df = pd.read_csv(io.StringIO(pasted), sep=sep, dtype=str).fillna("")
-                df.columns = [c.strip() for c in df.columns]
-                raw = df.to_dict("records")
-                cleaned = [clean_passenger(p) for p in raw]
-                st.session_state.passengers = raw
-                st.session_state.cleaned_passengers = cleaned
-                st.success(f"✅ {len(cleaned)}명 적용 완료")
-            except Exception as e:
-                st.error(f"파싱 오류: {e}")
-
+    # ── 검증 결과 ────────────────────────────────────────────
     if st.session_state.cleaned_passengers:
-        st.divider()
-        st.subheader("변환 결과 비교")
-        rows = []
-        for orig, cln in zip(
-            st.session_state.passengers,
-            st.session_state.cleaned_passengers,
-        ):
-            rows.append({
-                "NO": orig.get("NO", ""),
-                "원본 이름": orig.get("영문이름", ""),
-                "→ 변환 이름": cln.get("영문이름", ""),
-                "원본 생년월일": str(orig.get("생년월일", "")),
-                "→ 변환 생년월일": cln.get("생년월일", ""),
-                "원본 성별": str(orig.get("성별", "")),
-                "→ 변환 성별": cln.get("성별", ""),
-                "여권번호": cln.get("여권번호", ""),
-            })
-        st.dataframe(pd.DataFrame(rows), use_container_width=True)
-
-
-# ══════════════════════════════════════════════════════════════
-# 화면 3: 데이터 검증
-# ══════════════════════════════════════════════════════════════
-elif menu == "3. 데이터 검증":
-    st.title("데이터 검증")
-
-    if not st.session_state.cleaned_passengers:
-        st.warning("먼저 명단을 업로드하세요.")
-    else:
         passengers = st.session_state.cleaned_passengers
         common = st.session_state.common_info
+        _, all_errors = validate_all(passengers, common)
 
-        valid_list, all_errors = validate_all(passengers, common)
+        c1, c2, c3 = st.columns(3)
+        c1.metric("승객 수", len(passengers))
+        c2.metric("정상", len(passengers) - len(all_errors))
+        c3.metric("오류", len(all_errors))
 
-        col1, col2, col3 = st.columns(3)
-        col1.metric("전체 승객", len(passengers))
-        col2.metric("정상", len(valid_list))
-        col3.metric("오류", len(passengers) - len(valid_list))
-
-        st.divider()
         if all_errors:
-            st.subheader("⚠ 오류 목록")
             for err in all_errors:
                 st.error(err)
         else:
-            st.success("✅ 모든 데이터 정상 — 인쇄 가능합니다.")
+            st.success("✅ 모든 데이터 정상 — 미리보기/출력으로 이동하세요.")
 
-        st.subheader("전체 데이터 확인")
-        preview_rows = []
+        rows = []
         for p in passengers:
             errs = validate_passenger(int(str(p.get("NO", 0)) or 0), p, common)
-            preview_rows.append({
-                "NO": p.get("NO", ""),
-                "영문이름": p.get("영문이름", ""),
-                "생년월일": p.get("생년월일", ""),
-                "여권번호": p.get("여권번호", ""),
-                "성별": p.get("성별", ""),
+            rows.append({
+                "NO": p.get("NO", ""), "영문이름": p.get("영문이름", ""),
+                "생년월일": p.get("생년월일", ""), "여권번호": p.get("여권번호", ""),
                 "상태": "✅" if not errs else f"❌ {len(errs)}건",
             })
-        st.dataframe(pd.DataFrame(preview_rows), use_container_width=True)
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
 
 # ══════════════════════════════════════════════════════════════
-# 고급: 양식 위치 설정 (사이드바 버튼으로 진입)
+# 화면 2: 미리보기
 # ══════════════════════════════════════════════════════════════
-if st.session_state.get("_show_pos_editor"):
-    st.title("양식 위치 설정 (고급)")
-    st.info("📐 좌표 기준: A4 포인트 (좌상단=0,0 / A4=595×842pt)\n\n4번 미리보기와 함께 번갈아 보면서 조정하세요.")
-
-    form_sel = st.radio(
-        "양식 선택",
-        ["출입국카드 (外国人入国記録)", "휴대품신고서 (휴대품·별송품)"],
-        horizontal=True,
-        key="pos_form_sel",
-    )
-    form_type = "immigration_card" if "출입국" in form_sel else "customs_declaration"
-    positions = _get_positions(form_type)
-    field_names = list(positions.keys())
-
-    selected_field = st.selectbox(
-        "필드 선택", field_names,
-        format_func=lambda k: f"{k}  ─  {positions[k].get('label', '')}"
-    )
-
-    pos = dict(positions[selected_field])
-    st.divider()
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        pos["x"] = st.number_input("X (좌→우 pt)", value=float(pos.get("x", 0)), step=0.5, format="%.1f")
-        pos["y"] = st.number_input("Y (상→하 pt)", value=float(pos.get("y", 0)), step=0.5, format="%.1f")
-    with col2:
-        if pos.get("type") in ["text", "multiline"]:
-            pos["width"] = st.number_input("Width (pt)", value=float(pos.get("width", 100)), step=0.5, format="%.1f")
-            pos["height"] = st.number_input("Height (pt)", value=float(pos.get("height", 16)), step=0.5, format="%.1f")
-    with col3:
-        pos["font_size"] = st.number_input(
-            "Font Size (pt)", value=float(pos.get("font_size", 9)),
-            step=0.5, format="%.1f", min_value=5.0, max_value=20.0
-        )
-
-    positions[selected_field] = pos
-
-    col_save, col_reset, col_close = st.columns([1, 1, 4])
-    with col_save:
-        if st.button("💾 저장", type="primary"):
-            _save_session_positions(form_type, positions)
-            st.success("저장 완료!")
-    with col_reset:
-        if st.button("🔄 초기화"):
-            from utils.position_manager import get_default_positions
-            _save_session_positions(form_type, get_default_positions(form_type))
-            st.success("초기화 완료!")
-    with col_close:
-        if st.button("✕ 닫기"):
-            st.session_state["_show_pos_editor"] = False
-            st.rerun()
-
-    # 오버레이 시각화
-    st.divider()
-    st.subheader("📍 전체 필드 위치 시각화")
-    st.caption("빨간 박스 = 선택된 필드 / 파란 박스 = 나머지 필드")
-
-    jpg_bytes = (
-        st.session_state.imm_jpg_bytes
-        if form_type == "immigration_card"
-        else st.session_state.cus_jpg_bytes
-    )
-
-    if jpg_bytes:
-        from PIL import Image, ImageDraw
-        from reportlab.lib.pagesizes import A4
-        PAGE_W_REF, PAGE_H_REF = A4
-
-        overlay_img = Image.open(io.BytesIO(jpg_bytes)).convert("RGB")
-        gray = overlay_img.convert("L")
-        px = overlay_img.load(); gp = gray.load()
-        for yy in range(overlay_img.height):
-            for xx in range(overlay_img.width):
-                if gp[xx, yy] > 200:
-                    px[xx, yy] = (255, 255, 255)
-
-        iw, ih = overlay_img.size
-        sx_ov, sy_ov = iw / PAGE_W_REF, ih / PAGE_H_REF
-        draw = ImageDraw.Draw(overlay_img)
-
-        for k, v in positions.items():
-            x0 = float(v["x"]) * sx_ov
-            y0 = float(v["y"]) * sy_ov
-            ftype = v.get("type", "text")
-            color = (220, 0, 0) if k == selected_field else (0, 80, 200)
-            lw = 3 if k == selected_field else 1
-
-            if ftype in ["text", "multiline"]:
-                w = float(v.get("width", 60)) * sx_ov
-                h = float(v.get("height", 14)) * sy_ov
-                draw.rectangle([x0, y0 - h, x0 + w, y0 + 4], outline=color, width=lw)
-                draw.text((x0 + 2, y0 - h + 1), k, fill=color)
-            elif ftype == "checkbox":
-                draw.rectangle([x0, y0 - 10 * sy_ov, x0 + 10 * sx_ov, y0 + 3], outline=color, width=lw)
-                draw.text((x0, y0 - 10 * sy_ov - 12), k, fill=color)
-
-        crop_h = int(370 * sy_ov)
-        overlay_img = overlay_img.crop((0, 0, iw, min(crop_h, ih)))
-        st.image(overlay_img, use_container_width=True)
-    else:
-        st.info("JPG가 자동 로드됩니다. templates/ 폴더를 확인하세요.")
-
-    st.divider()
-    st.subheader("전체 좌표표")
-    st.dataframe(pd.DataFrame([
-        {
-            "key": k, "label": v.get("label", ""), "type": v.get("type", "text"),
-            "x": v.get("x", 0), "y": v.get("y", 0),
-            "width": v.get("width", "-"), "font_size": v.get("font_size", 9),
-        }
-        for k, v in positions.items()
-    ]), use_container_width=True)
-
-# ══════════════════════════════════════════════════════════════
-# 화면 4: 미리보기
-# ══════════════════════════════════════════════════════════════
-elif menu == "4. 미리보기":
+elif menu == "2. 미리보기":
     st.title("미리보기")
 
     if not st.session_state.cleaned_passengers:
-        st.warning("먼저 명단을 업로드하세요.")
-    else:
-        passengers = st.session_state.cleaned_passengers
-        common = st.session_state.common_info
+        st.warning("먼저 '1. 정보 & 명단'에서 명단을 업로드하세요.")
+        st.stop()
 
-        col_ctrl1, col_ctrl2 = st.columns([3, 1])
-        with col_ctrl1:
-            pax_idx = st.selectbox(
-                "승객 선택",
-                range(len(passengers)),
-                format_func=lambda i: f"{passengers[i].get('NO', '')}: {passengers[i].get('영문이름', '')}",
-            )
-        with col_ctrl2:
-            form_choice = st.radio("양식", ["출입국카드", "휴대품신고서"], horizontal=False)
+    passengers = st.session_state.cleaned_passengers
+    common = st.session_state.common_info
 
-        passenger = passengers[pax_idx]
+    col_a, col_b = st.columns([3, 1])
+    with col_a:
+        pax_idx = st.selectbox(
+            "승객 선택",
+            range(len(passengers)),
+            format_func=lambda i: f"{passengers[i].get('NO','')}: {passengers[i].get('영문이름','')}",
+        )
+    with col_b:
+        form_choice = st.radio("양식", ["출입국카드", "휴대품신고서"], horizontal=False)
 
+    passenger = passengers[pax_idx]
+
+    with st.spinner("이미지 생성 중..."):
         if form_choice == "출입국카드":
             preview_img = _render_imm_image(passenger, common)
         else:
-            # 휴대품신고서: 기존 방식 유지
-            from utils.pdf_generator import generate_preview_image
-            positions = _get_positions("customs_declaration")
+            positions = load_positions("customs_declaration")
             jpg_bytes = st.session_state.cus_jpg_bytes
             tmp_jpg = _write_jpg_to_tmp(jpg_bytes) if jpg_bytes else None
             preview_img = generate_preview_image(
                 "customs_declaration", passenger, common, positions, tmp_jpg, scale=1.0
             )
-            if tmp_jpg:
+            if tmp_jpg and os.path.exists(tmp_jpg):
                 os.unlink(tmp_jpg)
 
-        st.image(
-            preview_img,
-            caption=f"{passenger.get('영문이름', '')} — {form_choice}",
-            use_container_width=True,
-        )
+    st.image(preview_img,
+             caption=f"{passenger.get('영문이름','')} — {form_choice}",
+             use_container_width=True)
 
 
 # ══════════════════════════════════════════════════════════════
-# 화면 5: 인쇄 / PDF
+# 화면 3: 출력
 # ══════════════════════════════════════════════════════════════
-elif menu == "5. 인쇄 / PDF":
-    st.title("인쇄 / PDF 생성")
+elif menu == "3. 출력":
+    st.title("인쇄 / PDF 출력")
 
     if not st.session_state.cleaned_passengers:
-        st.warning("먼저 명단을 업로드하세요.")
-    else:
-        passengers = st.session_state.cleaned_passengers
-        common = st.session_state.common_info
+        st.warning("먼저 '1. 정보 & 명단'에서 명단을 업로드하세요.")
+        st.stop()
 
-        col1, col2 = st.columns(2)
-        with col1:
-            target = st.radio("출력 대상", ["전체 승객", "선택 승객"])
-            if target == "선택 승객":
-                selected_indices = st.multiselect(
-                    "승객 선택",
-                    range(len(passengers)),
-                    format_func=lambda i: f"{passengers[i].get('NO', '')}: {passengers[i].get('영문이름', '')}",
-                )
-                selected_passengers = [passengers[i] for i in selected_indices]
-            else:
-                selected_passengers = passengers
+    passengers = st.session_state.cleaned_passengers
+    common = st.session_state.common_info
 
-        with col2:
-            doc_type = st.radio("출력 서류", ["출입국카드만", "휴대품신고서만", "두 서류 모두"])
-            include_imm = doc_type in ["출입국카드만", "두 서류 모두"]
-            include_cus = doc_type in ["휴대품신고서만", "두 서류 모두"]
+    col1, col2 = st.columns(2)
+    with col1:
+        target = st.radio("출력 대상", ["전체 승객", "선택 승객"])
+        if target == "선택 승객":
+            selected_indices = st.multiselect(
+                "승객 선택",
+                range(len(passengers)),
+                format_func=lambda i: f"{passengers[i].get('NO','')}: {passengers[i].get('영문이름','')}",
+            )
+            selected_passengers = [passengers[i] for i in selected_indices]
+        else:
+            selected_passengers = passengers
 
-        n = len(selected_passengers)
-        st.info(f"출력 예정: {n}명")
-        if n == 0:
-            st.stop()
+    with col2:
+        doc_type = st.radio("출력 서류", ["출입국카드만", "휴대품신고서만", "두 서류 모두"])
+        include_imm = doc_type in ["출입국카드만", "두 서류 모두"]
+        include_cus = doc_type in ["휴대품신고서만", "두 서류 모두"]
 
-        st.divider()
+    n = len(selected_passengers)
+    st.info(f"출력 예정: {n}명")
+    if n == 0:
+        st.stop()
 
-        # ══════════════════════════════════════════════════
-        # 웹 인쇄 (권장)
-        # ══════════════════════════════════════════════════
-        st.subheader("🖨 웹 인쇄 (권장)")
-        st.caption("버튼 클릭 → 새 탭 열림 → Ctrl+P")
+    st.divider()
 
-        if st.button("🖨 인쇄 미리보기 열기", type="primary"):
-            with st.spinner(f"{n}명 이미지 생성 중..."):
-                images_b64 = []
-                cus_positions = _get_positions("customs_declaration")
+    # ── 웹 인쇄 ─────────────────────────────────────────────
+    st.subheader("🖨 웹 인쇄 (권장)")
+    st.caption("버튼 클릭 → 새 탭 열림 → Ctrl+P")
+
+    if st.button("🖨 인쇄 미리보기 열기", type="primary"):
+        with st.spinner(f"{n}명 이미지 생성 중..."):
+            images_b64 = []
+            cus_positions = load_positions("customs_declaration")
+            cus_tmp = _write_jpg_to_tmp(st.session_state.cus_jpg_bytes) if st.session_state.cus_jpg_bytes else None
+
+            for p in selected_passengers:
+                if include_imm:
+                    img = _render_imm_image(p, common)
+                    images_b64.append(_img_to_base64(img))
+                if include_cus:
+                    img = generate_preview_image(
+                        "customs_declaration", p, common, cus_positions, cus_tmp, scale=1.0
+                    )
+                    images_b64.append(_img_to_base64(img))
+
+            if cus_tmp and os.path.exists(cus_tmp):
+                os.unlink(cus_tmp)
+
+        html = _build_print_html(images_b64, title=f"입국서류 {n}명")
+        html_b64 = base64.b64encode(html.encode("utf-8")).decode()
+        components.html(f"""
+        <script>
+        const html = atob("{html_b64}");
+        const blob = new Blob([html], {{type: 'text/html'}});
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        </script>""", height=0)
+        st.success(f"✅ {len(images_b64)}페이지 — 새 탭이 열립니다.")
+        st.info("팝업 차단 시: 주소창 우측 팝업 허용 클릭")
+
+    st.divider()
+
+    # ── PDF 다운로드 ─────────────────────────────────────────
+    st.subheader("📄 PDF 다운로드")
+
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+        if st.button("📄 통합 PDF"):
+            with st.spinner("PDF 생성 중..."):
+                pages = []
+                cus_positions = load_positions("customs_declaration")
                 cus_tmp = _write_jpg_to_tmp(st.session_state.cus_jpg_bytes) if st.session_state.cus_jpg_bytes else None
 
                 for p in selected_passengers:
                     if include_imm:
-                        img = _render_imm_image(p, common)
-                        images_b64.append(_img_to_base64(img))
+                        pages.append(_render_imm_image(p, common).convert("RGB"))
                     if include_cus:
-                        from utils.pdf_generator import generate_preview_image
                         img = generate_preview_image(
-                            "customs_declaration", p, common,
-                            cus_positions, cus_tmp, scale=1.0
+                            "customs_declaration", p, common, cus_positions, cus_tmp, scale=1.0
                         )
-                        images_b64.append(_img_to_base64(img))
+                        pages.append(img.convert("RGB"))
 
                 if cus_tmp and os.path.exists(cus_tmp):
                     os.unlink(cus_tmp)
 
-            html = _build_print_html(images_b64, title=f"입국서류 {n}명")
-            html_b64 = base64.b64encode(html.encode("utf-8")).decode()
-            js = f"""
-            <script>
-            const html = atob("{html_b64}");
-            const blob = new Blob([html], {{type: 'text/html'}});
-            const url = URL.createObjectURL(blob);
-            window.open(url, '_blank');
-            </script>
-            """
-            components.html(js, height=0)
-            st.success(f"✅ {len(images_b64)}페이지 — 새 탭이 열립니다.")
-            st.info("팝업 차단 시: 주소창 우측 팝업 허용 클릭")
+                buf = io.BytesIO()
+                if pages:
+                    pages[0].save(buf, format="PDF", save_all=True,
+                                  append_images=pages[1:], resolution=200)
+                buf.seek(0)
+                pdf_bytes = buf.read()
 
-        st.divider()
+            st.download_button(
+                label=f"📥 통합 PDF ({n}명, {len(pdf_bytes)//1024}KB)",
+                data=pdf_bytes,
+                file_name="immigration_forms.pdf",
+                mime="application/pdf",
+            )
 
-        # ══════════════════════════════════════════════════
-        # PDF 다운로드 (출입국카드: PIL→PDF / 휴대품: reportlab)
-        # ══════════════════════════════════════════════════
-        st.subheader("📄 PDF 다운로드")
-
-        col_a, col_b = st.columns(2)
-
-        with col_a:
-            if st.button("📄 통합 PDF 생성"):
-                with st.spinner("PDF 생성 중..."):
-                    pages = []
-                    cus_positions = _get_positions("customs_declaration")
-                    cus_tmp = _write_jpg_to_tmp(st.session_state.cus_jpg_bytes) if st.session_state.cus_jpg_bytes else None
-
-                    for p in selected_passengers:
-                        if include_imm:
-                            pages.append(_render_imm_image(p, common).convert("RGB"))
-                        if include_cus:
-                            from utils.pdf_generator import generate_preview_image
-                            img = generate_preview_image(
-                                "customs_declaration", p, common,
-                                cus_positions, cus_tmp, scale=1.0
-                            )
-                            pages.append(img.convert("RGB"))
-
-                    if cus_tmp and os.path.exists(cus_tmp):
-                        os.unlink(cus_tmp)
-
-                    buf = io.BytesIO()
-                    if pages:
-                        pages[0].save(
-                            buf, format="PDF", save_all=True,
-                            append_images=pages[1:], resolution=150,
-                        )
-                    buf.seek(0)
-                    pdf_bytes = buf.read()
-
-                st.download_button(
-                    label=f"📥 통합 PDF ({n}명, {len(pdf_bytes)//1024}KB)",
-                    data=pdf_bytes,
-                    file_name="immigration_forms.pdf",
-                    mime="application/pdf",
-                )
-
-        with col_b:
-            if st.button("📦 개인별 ZIP"):
+    with col_b:
+        if st.button("📦 개인별 ZIP"):
+            with st.spinner("생성 중..."):
                 zip_buf = io.BytesIO()
-                with st.spinner("생성 중..."):
-                    cus_positions = _get_positions("customs_declaration")
-                    cus_tmp = _write_jpg_to_tmp(st.session_state.cus_jpg_bytes) if st.session_state.cus_jpg_bytes else None
+                cus_positions = load_positions("customs_declaration")
+                cus_tmp = _write_jpg_to_tmp(st.session_state.cus_jpg_bytes) if st.session_state.cus_jpg_bytes else None
 
-                    with zipfile.ZipFile(zip_buf, "w") as zf:
-                        for p in selected_passengers:
-                            name_safe = p.get("영문이름", "unknown").replace(" ", "_")
-                            no = p.get("NO", "")
+                with zipfile.ZipFile(zip_buf, "w") as zf:
+                    for p in selected_passengers:
+                        name_safe = p.get("영문이름", "unknown").replace(" ", "_").replace("/", "-")
+                        no = p.get("NO", "")
 
-                            if include_imm:
-                                img = _render_imm_image(p, common).convert("RGB")
-                                buf = io.BytesIO()
-                                img.save(buf, format="PDF", resolution=150)
-                                zf.writestr(f"{no}_{name_safe}_immigration.pdf", buf.getvalue())
+                        if include_imm:
+                            img = _render_imm_image(p, common).convert("RGB")
+                            buf = io.BytesIO()
+                            img.save(buf, format="PDF", resolution=200)
+                            zf.writestr(f"{no}_{name_safe}_immigration.pdf", buf.getvalue())
 
-                            if include_cus:
-                                from utils.pdf_generator import generate_preview_image
-                                img = generate_preview_image(
-                                    "customs_declaration", p, common,
-                                    cus_positions, cus_tmp, scale=1.0
-                                ).convert("RGB")
-                                buf = io.BytesIO()
-                                img.save(buf, format="PDF", resolution=150)
-                                zf.writestr(f"{no}_{name_safe}_customs.pdf", buf.getvalue())
+                        if include_cus:
+                            img = generate_preview_image(
+                                "customs_declaration", p, common, cus_positions, cus_tmp, scale=1.0
+                            ).convert("RGB")
+                            buf = io.BytesIO()
+                            img.save(buf, format="PDF", resolution=200)
+                            zf.writestr(f"{no}_{name_safe}_customs.pdf", buf.getvalue())
 
-                    if cus_tmp and os.path.exists(cus_tmp):
-                        os.unlink(cus_tmp)
+                if cus_tmp and os.path.exists(cus_tmp):
+                    os.unlink(cus_tmp)
 
-                zip_buf.seek(0)
-                st.download_button(
-                    label=f"📥 ZIP ({n}명)",
-                    data=zip_buf.read(),
-                    file_name="immigration_forms_individual.zip",
-                    mime="application/zip",
-                )
+            zip_buf.seek(0)
+            st.download_button(
+                label=f"📥 ZIP ({n}명)",
+                data=zip_buf.read(),
+                file_name="immigration_forms.zip",
+                mime="application/zip",
+            )
