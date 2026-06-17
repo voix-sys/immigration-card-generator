@@ -20,6 +20,62 @@ from utils.position_manager import load_positions, init_default_configs
 from utils.pdf_generator import generate_preview_image
 from fill_card import fill_card, passenger_to_card_data
 
+# ── 엑셀 스마트 로더 ───────────────────────────────────────────
+_COL_PATTERNS = {
+    "NO":    ["no", "번호", "순번", "no."],
+    "영문이름": ["영문이름", "영문성명", "영문명", "성명(영문)", "영어이름", "영어성명",
+               "name", "english name", "eng name", "eng.name"],
+    "생년월일": ["생년월일", "생년", "birthday", "birth", "dob", "date of birth"],
+    "여권번호": ["여권번호", "여권", "passport", "passport no", "passportno", "p/p"],
+    "성별":   ["성별", "sex", "gender"],
+}
+
+def _detect_header_row(raw_df: pd.DataFrame) -> int:
+    """NO 또는 영문이름이 있는 행을 헤더 행으로 탐지 (최대 10행 탐색)"""
+    for i in range(min(10, len(raw_df))):
+        cells = [str(v).strip().lower() for v in raw_df.iloc[i] if pd.notna(v)]
+        if any(c in ("no", "no.") for c in cells):
+            return i
+        if any("영문" in c or "name" in c for c in cells):
+            return i
+    return 0
+
+def _map_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """컬럼명을 표준 필드명으로 매핑"""
+    col_map = {}
+    for std, patterns in _COL_PATTERNS.items():
+        for col in df.columns:
+            if col.strip().lower() in patterns:
+                col_map[col] = std
+                break
+    df = df.rename(columns=col_map)
+    if "NO" not in df.columns:
+        df.insert(0, "NO", range(1, len(df) + 1))
+    return df
+
+def load_excel_smart(file_obj) -> tuple[pd.DataFrame, str]:
+    """여행사 엑셀/CSV를 자동 인식해 표준 DataFrame 반환. (df, 오류메시지) 반환"""
+    name = file_obj.name
+    try:
+        if name.endswith(".csv"):
+            raw = pd.read_excel(file_obj, dtype=str, header=None)
+        else:
+            raw = pd.read_excel(file_obj, dtype=str, header=None)
+        header_row = _detect_header_row(raw)
+        df = pd.read_excel(file_obj, dtype=str, header=header_row).fillna("")
+        df.columns = [str(c).strip() for c in df.columns]
+        df = _map_columns(df)
+        # 영문이름 없는 행 제거
+        if "영문이름" in df.columns:
+            df = df[df["영문이름"].str.strip() != ""]
+        required = {"영문이름", "생년월일", "여권번호"}
+        missing = required - set(df.columns)
+        if missing:
+            return None, f"필수 컬럼을 찾을 수 없음: {missing}\n실제 컬럼: {list(df.columns)}"
+        return df, ""
+    except Exception as e:
+        return None, str(e)
+
 # ── 초기화 ─────────────────────────────────────────────────────
 init_default_configs()
 
@@ -321,24 +377,15 @@ if menu == "1. 정보 & 명단":
                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
             if uploaded:
-                try:
-                    if uploaded.name.endswith(".csv"):
-                        df = pd.read_csv(uploaded, dtype=str).fillna("")
-                    else:
-                        df = pd.read_excel(uploaded, dtype=str).fillna("")
-                    df.columns = [c.strip() for c in df.columns]
-                    required_cols = {"NO", "영문이름", "생년월일", "여권번호", "성별"}
-                    missing = required_cols - set(df.columns)
-                    if missing:
-                        st.error(f"필수 컬럼 없음: {missing}")
-                    else:
-                        raw = df.to_dict("records")
-                        cleaned = [clean_passenger(p) for p in raw]
-                        st.session_state.passengers = raw
-                        st.session_state.cleaned_passengers = cleaned
-                        st.success(f"✅ {len(cleaned)}명 로드 완료")
-                except Exception as e:
-                    st.error(f"파일 읽기 오류: {e}")
+                df, err = load_excel_smart(uploaded)
+                if err:
+                    st.error(f"파일 읽기 오류: {err}")
+                else:
+                    raw = df.to_dict("records")
+                    cleaned = [clean_passenger(p) for p in raw]
+                    st.session_state.passengers = raw
+                    st.session_state.cleaned_passengers = cleaned
+                    st.success(f"✅ {len(cleaned)}명 로드 완료")
 
         with tab_paste:
             st.caption("헤더 포함, 탭 또는 쉼표 구분:")
