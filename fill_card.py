@@ -4,12 +4,13 @@ fill_card.py
 일본 외국인입국기록(출입국카드) 자동 텍스트 오버레이 유틸리티
 
 기준 해상도 : 1654 × 2337 px  (A4 200 DPI — 실제 템플릿 크기)
+카드 콘텐츠 : x=0-1256, y=0-730 (우측 398px, 하단은 여백)
 좌표계      : 좌상단 원점, x→ 오른쪽, y↓ 아래
-텍스트 색상 : 거의 검정 (15, 15, 60) — 진한 네이비
 
-사용법:
-    python fill_card.py                          # 예시 데이터로 실행
-    python fill_card.py input.jpg output.png     # 이미지 직접 지정
+Grid line 실측 (python PIL로 추출):
+  Horizontal: [49, 113, 175, 231, 286, 357, 416, 483, 550, 617, 645, 705]
+  Vertical:   [6, 164, 637(name), 1256(card right edge)]
+  Card width: 1256px (1256-1654는 흰 여백)
 """
 
 from __future__ import annotations
@@ -64,67 +65,85 @@ SAMPLE_DATA: dict = {
 
 FIELDS: dict[str, dict] = {
 
-    # ── 인적 사항 ─────────────────────────────────────────────
-    # 원본 좌표(1494×2012 기준)를 A4 200DPI(1654×2337)로 스케일: sx=1.107, sy=1.162
+    # ── 氏名/Name row  (y=49-113) ─────────────────────────────
+    # x=164 label end | x=637 family/given divider | x=1256 card right
     "family_name": {
-        "x": 177, "y": 128, "w": 465, "h": 64,
-        "align": "left", "font_size": 31, "auto_shrink": True,
+        "x": 167, "y": 49, "w": 468, "h": 64,
+        "align": "left", "font_size": 28, "auto_shrink": True,
     },
     "given_names": {
-        "x": 659, "y": 128, "w": 587, "h": 64,
-        "align": "left", "font_size": 31, "auto_shrink": True,
+        "x": 640, "y": 49, "w": 614, "h": 64,
+        "align": "left", "font_size": 28, "auto_shrink": True,
     },
 
-    # 생년월일
+    # ── 生年月日/DOB row  (y=113-175) ─────────────────────────
+    # DOB area x=164-479 (315px): Day 25% | Month 25% | Year 50%
+    # Country/City area x=637-1256 (619px): Country ~40% | City ~60%
     "dob_day": {
-        "x": 177, "y": 221, "w": 66,  "h": 58,
-        "align": "center", "font_size": 30, "auto_shrink": False,
+        "x": 167, "y": 113, "w": 76, "h": 62,
+        "align": "center", "font_size": 26, "auto_shrink": False,
     },
     "dob_month": {
-        "x": 260, "y": 221, "w": 66,  "h": 58,
-        "align": "center", "font_size": 30, "auto_shrink": False,
+        "x": 248, "y": 113, "w": 76, "h": 62,
+        "align": "center", "font_size": 26, "auto_shrink": False,
     },
     "dob_year": {
-        "x": 371, "y": 221, "w": 122, "h": 58,
-        "align": "center", "font_size": 30, "auto_shrink": False,
-        "letter_spacing": 4,
+        "x": 328, "y": 113, "w": 148, "h": 62,
+        "align": "center", "font_size": 26, "auto_shrink": False,
+        "letter_spacing": 2,
     },
-
-    # ── 주소 / 편명 ───────────────────────────────────────────
     "country": {
-        "x": 659, "y": 221, "w": 354, "h": 58,
-        "align": "left", "font_size": 30, "auto_shrink": True,
+        "x": 640, "y": 113, "w": 254, "h": 62,
+        "align": "left", "font_size": 24, "auto_shrink": True,
     },
     "city": {
-        "x": 1025, "y": 221, "w": 222, "h": 58,
-        "align": "left", "font_size": 30, "auto_shrink": True,
+        "x": 897, "y": 113, "w": 357, "h": 62,
+        "align": "left", "font_size": 24, "auto_shrink": True,
     },
+
+    # ── 渡航目的/Purpose rows  (y=175-286) ────────────────────
+    # Right section cols: [735, 806, 932, 1256]
+    # Flight No label: 735-932 | Flight No input: 932-1256
+    # Sub-row 1: y=175-231  Sub-row 2: y=231-286
     "flight_no": {
-        "x": 952, "y": 314, "w": 288, "h": 70,
-        "align": "center", "font_size": 31, "auto_shrink": True,
-    },
-    "hotel_name": {
-        "x": 177, "y": 410, "w": 753, "h": 64,
-        "align": "left", "font_size": 30, "auto_shrink": True,
-    },
-    "hotel_tel": {
-        "x": 941, "y": 410, "w": 299, "h": 64,
-        "align": "left", "font_size": 30, "auto_shrink": True,
+        "x": 934, "y": 175, "w": 320, "h": 56,
+        "align": "center", "font_size": 26, "auto_shrink": True,
     },
     "stay_duration": {
-        "x": 952, "y": 389, "w": 288, "h": 58,
-        "align": "center", "font_size": 28, "auto_shrink": True,
+        "x": 934, "y": 231, "w": 320, "h": 55,
+        "align": "center", "font_size": 24, "auto_shrink": True,
+    },
+
+    # ── 日本の連絡先/Address row  (y=286-416) ─────────────────
+    # TEL divider detected at x≈850 (15% threshold)
+    # Hotel name: x=164-850  |  TEL: x=850-1256
+    "hotel_name": {
+        "x": 167, "y": 286, "w": 680, "h": 130,
+        "align": "left", "font_size": 24, "auto_shrink": True,
+    },
+    "hotel_tel": {
+        "x": 854, "y": 340, "w": 400, "h": 76,
+        "align": "left", "font_size": 24, "auto_shrink": True,
     },
 }
 
 # 체크박스: (x, y) = 체크 기호를 배치할 칸의 정중앙
+#
+# Q section 실측 (debug_q_full.png 크롭으로 확인):
+#   Q section 시작: y=416  |  구분선: 483, 550, 617  |  선언문: 617+
+#   Q1: y=416-483 (center 449)
+#   Q2: y=483-550 (center 516)
+#   Q3: y=550-617 (center 583)
+#   いいえ No □ x 위치: x≈1024-1043 (center 1033)
+#
+# Purpose row (y=175-231): 관광 □ x≈182-228 center 205 / 상용 □ x≈420-431 center 430
 CHECKBOXES: dict[str, tuple[int, int]] = {
-    "tourism":  (153, 332),
-    "business": (319, 332),
-    # 하단 질문 No 체크 — 3개 고정
-    "no_q1": (1032, 701),
-    "no_q2": (1032, 760),
-    "no_q3": (1032, 827),
+    "tourism":  (205, 195),   # Purpose row: y=(175+231)/2 adjusted slightly up
+    "business": (430, 195),
+    # 하단 질문 いいえ No □ — 실측 row centers
+    "no_q1": (1033, 449),    # Q1: y=(416+483)/2=449
+    "no_q2": (1033, 516),    # Q2: y=(483+550)/2=516
+    "no_q3": (1033, 583),    # Q3: y=(550+617)/2=583
 }
 
 # ══════════════════════════════════════════════════════════════
